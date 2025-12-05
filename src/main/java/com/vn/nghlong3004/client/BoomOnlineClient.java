@@ -1,5 +1,8 @@
 package com.vn.nghlong3004.client;
 
+import com.vn.nghlong3004.client.game.GameLaunch;
+import javax.swing.*;
+
 /**
  * Project: boom-online-client
  *
@@ -7,7 +10,7 @@ package com.vn.nghlong3004.client;
  * @since 12/3/2025
  */
 public class BoomOnlineClient {
-  public static void main(String[] args){
-    System.out.println("Hello world!");
+  public static void main(String[] args) {
+    SwingUtilities.invokeLater(GameLaunch::run);
   }
 }
