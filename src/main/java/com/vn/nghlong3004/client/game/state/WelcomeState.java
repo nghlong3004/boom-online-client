@@ -1,0 +1,79 @@
+package com.vn.nghlong3004.client.game.state;
+
+import static com.vn.nghlong3004.client.constant.GameConstant.*;
+
+import com.vn.nghlong3004.client.game.GameContext;
+import com.vn.nghlong3004.client.game.GamePanel;
+import com.vn.nghlong3004.client.view.ButtonAdapter;
+import com.vn.nghlong3004.client.view.CustomModalBorder;
+import java.awt.*;
+import java.awt.event.MouseEvent;
+import javax.swing.*;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import raven.modal.ModalDialog;
+import raven.modal.option.Option;
+
+/**
+ * Project: boom-online-client
+ *
+ * @author nghlong3004
+ * @since 12/6/2025
+ */
+@Slf4j
+@RequiredArgsConstructor
+public class WelcomeState implements GameState {
+  private final GamePanel gamePanel;
+  private final CustomModalBorder loginPanel;
+  private final Option option;
+  private final ButtonAdapter buttonAdapter;
+
+  @Override
+  public void previous(GameContext gameContext) {}
+
+  @Override
+  public void next(GameContext gameContext) {}
+
+  @Override
+  public void print() {
+    if (!ModalDialog.isIdExist(loginPanel.toString())) {
+      ModalDialog.showModal(gamePanel, loginPanel, option, loginPanel.toString());
+    }
+  }
+
+  @Override
+  public void render(Graphics g) {
+    if (!ModalDialog.isIdExist(loginPanel.toString())) {
+      buttonAdapter.render(g);
+    }
+  }
+
+  @Override
+  public void mousePressed(MouseEvent e) {
+    if (!ModalDialog.isIdExist(loginPanel.toString())) {
+      if (buttonAdapter.isMouseOver(e)) {
+        buttonAdapter.setMousePressed(true);
+      }
+    }
+  }
+
+  @Override
+  public void mouseReleased(MouseEvent e) {
+    if (!ModalDialog.isIdExist(loginPanel.toString())) {
+      if (buttonAdapter.isMouseOver(e)) {
+        print();
+      }
+      buttonAdapter.reset();
+    }
+  }
+
+  @Override
+  public void mouseMoved(MouseEvent e) {
+    if (!ModalDialog.isIdExist(loginPanel.toString())) {
+      buttonAdapter.setMouseOver(false);
+      if (buttonAdapter.isMouseOver()) {
+        buttonAdapter.setMouseOver(true);
+      }
+    }
+  }
+}
