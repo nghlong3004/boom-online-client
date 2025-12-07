@@ -38,12 +38,23 @@ public final class GameStateFactory {
             .setOpacity(0.5f)
             .setSliderDuration(600);
     String icon = "images/account.svg";
-    CustomModalBorder loginPanel = new CustomModalBorder(new LoginPanel(), "Login", icon);
+    LoginPanel login = new LoginPanel();
+    CustomModalBorder loginPanel = new CustomModalBorder(login, "Sign In", icon);
+    icon = "images/register.svg";
+    CustomModalBorder registerPanel = new CustomModalBorder(new RegisterPanel(), "Sign Up", icon);
+    login.setRegisterPanel(registerPanel);
     int x = GAME_WIDTH - MENU_BUTTON_WIDTH >>> 1;
     int y = GAME_HEIGHT - MENU_BUTTON_HEIGHT >>> 1;
     ButtonAdapter buttonAdapter =
         new TextButton(x, y, LanguageUtil.getInstance().getString("welcome_button"));
     BufferedImage background = ImageUtil.loadImage(ImageConstant.WELCOME_BACKGROUND);
-    return new WelcomeState(gamePanel, loginPanel, option, buttonAdapter, background);
+    return WelcomeState.builder()
+        .gamePanel(gamePanel)
+        .loginPanel(loginPanel)
+        .registerPanel(registerPanel)
+        .option(option)
+        .buttonAdapter(buttonAdapter)
+        .background(background)
+        .build();
   }
 }

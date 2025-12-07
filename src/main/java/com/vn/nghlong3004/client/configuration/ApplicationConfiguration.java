@@ -4,6 +4,8 @@ import com.vn.nghlong3004.client.constant.GameConstant;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+import java.util.UUID;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -16,6 +18,9 @@ import lombok.extern.slf4j.Slf4j;
 public final class ApplicationConfiguration {
   private int fps = 0;
   private int ups = 0;
+
+  @Getter
+  private final String loginId = UUID.randomUUID().toString();
 
   private final Properties properties;
 
