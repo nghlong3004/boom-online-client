@@ -1,12 +1,15 @@
 package com.vn.nghlong3004.client.view;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import com.vn.nghlong3004.client.configuration.ApplicationConfiguration;
 import com.vn.nghlong3004.client.constant.ImageConstant;
 import com.vn.nghlong3004.client.util.LanguageUtil;
 import com.vn.nghlong3004.client.util.NotificationUtil;
 import java.awt.*;
 import javax.swing.*;
+import lombok.Setter;
 import net.miginfocom.swing.MigLayout;
+import raven.modal.ModalDialog;
 import raven.modal.Toast;
 import raven.modal.component.DropShadowBorder;
 
@@ -17,6 +20,10 @@ import raven.modal.component.DropShadowBorder;
  * @since 12/7/2025
  */
 public class LoginPanel extends FormPanel {
+
+  private JTextField txtUsername;
+  private JPasswordField txtPassword;
+  @Setter private CustomModalBorder registerPanel;
 
   public LoginPanel() {
     init();
@@ -48,12 +55,14 @@ public class LoginPanel extends FormPanel {
     loginContent.add(lbTitle);
     loginContent.add(lbDescription);
 
-    JTextField txtUsername = new JTextField();
-    JPasswordField txtPassword = new JPasswordField();
+    txtUsername = new JTextField();
+    txtPassword = new JPasswordField();
     JCheckBox chRememberMe = new JCheckBox(LanguageUtil.getInstance().getString("login_remember"));
     JButton cmdLogin = getCmdLogin();
-    JButton cmdForgotPassword = getCmdButton("login_forgot_password");
-    JButton cmdSignUp = getCmdButton("login_button_register");
+    JButton cmdForgotPassword =
+        new ButtonLink(LanguageUtil.getInstance().getString("login_forgot_password"));
+    JButton cmdSignUp =
+        new ButtonLink(LanguageUtil.getInstance().getString("login_button_register"));
 
     // style
     txtUsername.putClientProperty(
@@ -69,8 +78,8 @@ public class LoginPanel extends FormPanel {
     loginContent.putClientProperty(FlatClientProperties.STYLE, "background:null;");
 
     txtUsername.putClientProperty(FlatClientProperties.STYLE, "margin:4,10,4,10;" + "arc:12;");
-    txtPassword.putClientProperty(
-        FlatClientProperties.STYLE, "margin:4,10,4,10;" + "arc:12;" + "showRevealButton:true;");
+    txtPassword.putClientProperty(FlatClientProperties.STYLE, "margin:4,10,4,10;" + "arc:12;");
+    installRevealButton(txtPassword);
 
     cmdLogin.putClientProperty(FlatClientProperties.STYLE, "margin:4,10,4,10;" + "arc:12;");
 
@@ -98,8 +107,20 @@ public class LoginPanel extends FormPanel {
           String userName = txtUsername.getText();
           String password = String.valueOf(txtPassword.getPassword());
           NotificationUtil.getInstance().show(this, Toast.Type.INFO, "Click login");
-          txtUsername.setText("");
-          txtPassword.setText("");
+          setEmail("");
+          setPassword("");
+        });
+    cmdSignUp.addActionListener(
+        e -> {
+          if (registerPanel != null) {
+            ModalDialog.pushModal(
+                registerPanel, ApplicationConfiguration.getInstance().getLoginId());
+            NotificationUtil.getInstance()
+                .show(
+                    this,
+                    Toast.Type.INFO,
+                    LanguageUtil.getInstance().getString("register_button_register"));
+          }
         });
   }
 
@@ -147,47 +168,21 @@ public class LoginPanel extends FormPanel {
     return cmdLogin;
   }
 
-  private JButton getCmdButton(String key) {
-    JButton cmd =
-        new JButton(LanguageUtil.getInstance().getString(key)) {
-          @Override
-          public boolean isDefaultButton() {
-            return true;
-          }
-        };
-    cmd.setFocusPainted(false);
-    cmd.setCursor(new Cursor(Cursor.HAND_CURSOR));
-    cmd.putClientProperty(
-        FlatClientProperties.STYLE,
-        "arc:15;"
-            + "margin:1,5,1,5;"
-            + "borderWidth:0;"
-            + "focusWidth:0;"
-            + "innerFocusWidth:0;"
-            + "foreground:$Component.accentColor;"
-            + "background:null;");
-    return cmd;
-  }
-
-  private JPanel createInfo() {
-    JPanel panelInfo = new JPanel(new MigLayout("wrap,al center", "[center]"));
-    panelInfo.putClientProperty(FlatClientProperties.STYLE, "background:null;");
-
-    panelInfo.add(new JLabel("Don't remember your account details?"));
-    panelInfo.add(new JLabel("Contact us at"), "split 2");
-    LabelAdapter lbLink = new LabelAdapter("help@info.com");
-
-    panelInfo.add(lbLink);
-
-    // event
-    lbLink.addOnClick(e -> {});
-
-    return panelInfo;
-  }
-
   private void applyShadowBorder(JPanel panel) {
     if (panel != null) {
       panel.setBorder(new DropShadowBorder(new Insets(5, 8, 12, 8), 1, 25));
+    }
+  }
+
+  public void setPassword(String message) {
+    if (message != null) {
+      this.txtPassword.setText(message);
+    }
+  }
+
+  public void setEmail(String message) {
+    if (message != null) {
+      this.txtUsername.setText(message);
     }
   }
 }

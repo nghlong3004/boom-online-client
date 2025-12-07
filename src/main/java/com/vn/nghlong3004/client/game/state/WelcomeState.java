@@ -2,8 +2,10 @@ package com.vn.nghlong3004.client.game.state;
 
 import static com.vn.nghlong3004.client.constant.GameConstant.*;
 
+import com.vn.nghlong3004.client.configuration.ApplicationConfiguration;
 import com.vn.nghlong3004.client.game.GameContext;
 import com.vn.nghlong3004.client.game.GamePanel;
+import com.vn.nghlong3004.client.util.LanguageUtil;
 import com.vn.nghlong3004.client.util.NotificationUtil;
 import com.vn.nghlong3004.client.view.ButtonAdapter;
 import com.vn.nghlong3004.client.view.CustomModalBorder;
@@ -11,7 +13,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import javax.swing.*;
-import lombok.RequiredArgsConstructor;
+import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import raven.modal.ModalDialog;
 import raven.modal.Toast;
@@ -24,10 +26,11 @@ import raven.modal.option.Option;
  * @since 12/6/2025
  */
 @Slf4j
-@RequiredArgsConstructor
+@Builder
 public class WelcomeState implements GameState {
   private final GamePanel gamePanel;
   private final CustomModalBorder loginPanel;
+  private final CustomModalBorder registerPanel;
   private final Option option;
   private final ButtonAdapter buttonAdapter;
   private final BufferedImage background;
@@ -41,8 +44,13 @@ public class WelcomeState implements GameState {
   @Override
   public void print() {
     if (!ModalDialog.isIdExist(loginPanel.toString())) {
-      ModalDialog.showModal(gamePanel, loginPanel, option, loginPanel.toString());
-      NotificationUtil.getInstance().show(gamePanel, Toast.Type.INFO, "Login");
+      ModalDialog.showModal(
+          gamePanel, loginPanel, option, ApplicationConfiguration.getInstance().getLoginId());
+      NotificationUtil.getInstance()
+          .show(
+              gamePanel,
+              Toast.Type.INFO,
+              LanguageUtil.getInstance().getString("login_button_login"));
     }
   }
 

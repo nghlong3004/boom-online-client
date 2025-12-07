@@ -1,5 +1,9 @@
 package com.vn.nghlong3004.client.view;
 
+import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.extras.FlatSVGIcon;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import javax.swing.*;
 
 /**
@@ -8,26 +12,35 @@ import javax.swing.*;
  * @author nghlong3004
  * @since 12/6/2025
  */
-public class FormPanel extends JPanel {
+public abstract class FormPanel extends JPanel {
 
-  private LookAndFeel oldTheme = UIManager.getLookAndFeel();
+  protected void installRevealButton(JPasswordField txt) {
+    FlatSVGIcon iconEye = new FlatSVGIcon("images/eye.svg", 0.3f);
+    FlatSVGIcon iconHide = new FlatSVGIcon("images/hide.svg", 0.3f);
 
-  public FormPanel() {
-    init();
-  }
+    JToolBar toolBar = new JToolBar();
+    toolBar.putClientProperty(FlatClientProperties.STYLE, "margin:0,0,0,5;");
+    JButton button = new JButton(iconEye);
 
-  private void init() {}
+    button.addActionListener(
+        new ActionListener() {
 
-  public void formInit() {}
+          private final char defaultEchoChart = txt.getEchoChar();
+          private boolean show;
 
-  public void formOpen() {}
-
-  public void formRefresh() {}
-
-  protected final void formCheck() {
-    if (oldTheme != UIManager.getLookAndFeel()) {
-      oldTheme = UIManager.getLookAndFeel();
-      SwingUtilities.updateComponentTreeUI(this);
-    }
+          @Override
+          public void actionPerformed(ActionEvent actionEvent) {
+            show = !show;
+            if (show) {
+              button.setIcon(iconHide);
+              txt.setEchoChar((char) 0);
+            } else {
+              button.setIcon(iconEye);
+              txt.setEchoChar(defaultEchoChart);
+            }
+          }
+        });
+    toolBar.add(button);
+    txt.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, toolBar);
   }
 }
