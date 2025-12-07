@@ -3,6 +3,7 @@ package com.vn.nghlong3004.client.util;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Project: boom-online-client
@@ -10,6 +11,7 @@ import lombok.Getter;
  * @author nghlong3004
  * @since 12/7/2025
  */
+@Slf4j
 public class LanguageUtil {
   private ResourceBundle resourceBundle;
   @Getter private Locale currentLocale;
@@ -34,7 +36,7 @@ public class LanguageUtil {
 
   public String getString(String key) {
     try {
-      System.out.println(key);
+      log.info("Loading key: {}", key);
       return resourceBundle.getString(key);
     } catch (Exception e) {
       return "Key not found: " + key;
