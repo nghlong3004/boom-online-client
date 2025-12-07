@@ -1,12 +1,22 @@
 package com.vn.nghlong3004.client.view;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.vn.nghlong3004.client.configuration.ApplicationConfiguration;
+import com.vn.nghlong3004.client.model.request.RegisterRequest;
+import com.vn.nghlong3004.client.model.response.ErrorResponse;
+import com.vn.nghlong3004.client.service.HttpService;
 import com.vn.nghlong3004.client.util.LanguageUtil;
 import com.vn.nghlong3004.client.util.NotificationUtil;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.regex.Pattern;
 import javax.swing.*;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
@@ -31,6 +41,9 @@ public class RegisterPanel extends FormPanel {
   private JPasswordField txtPassword;
   private JPasswordField txtRePassword;
 
+  private final HttpService httpService;
+  private final Gson gson;
+
   private final JButton cmdSignUp;
   private final ButtonLink cmdBackLogin;
 
@@ -40,9 +53,11 @@ public class RegisterPanel extends FormPanel {
   private JRadioButton radioFemale;
   private JRadioButton radioDefault;
 
-  private int gender;
+  private int gender = -1;
 
-  public RegisterPanel() {
+  public RegisterPanel(HttpService httpService, Gson gson) {
+    this.httpService = httpService;
+    this.gson = gson;
     setLayout(new MigLayout("al center center"));
     JPanel panel = new JPanel();
     panel.setLayout(new MigLayout("insets n 2 n 2,fillx,wrap,width 300", "[fill,300]"));
@@ -100,7 +115,7 @@ public class RegisterPanel extends FormPanel {
     panel.add(lbDateOfBirth, "gapy 2 n");
 
     txtDateOfBirth = new JTextField();
-    txtDateOfBirth.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "MM / DD / YYYY");
+    txtDateOfBirth.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "DD / MM / YYYY");
     ((AbstractDocument) txtDateOfBirth.getDocument()).setDocumentFilter(getDocumentFilter());
     panel.add(txtDateOfBirth);
 
@@ -122,8 +137,6 @@ public class RegisterPanel extends FormPanel {
     panelGender.add(radioDefault, "wrap");
     panel.add(panelGender);
 
-    panel.add(new JCheckBox("Đồng ý với điều khoản"), "gapy 2 2");
-
     cmdSignUp = new ButtonLink(LanguageUtil.getInstance().getString("register_button_register"));
     cmdSignUp.putClientProperty(FlatClientProperties.STYLE, "foreground:#FFFFFF;");
     panel.add(cmdSignUp);
@@ -135,10 +148,9 @@ public class RegisterPanel extends FormPanel {
 
     cmdBackLogin = new ButtonLink(LanguageUtil.getInstance().getString("register_button_login"));
     panel.add(cmdBackLogin, "gapx n push");
-
+    add(panel);
     // event
     action();
-    add(panel);
   }
 
   private DocumentFilter getDocumentFilter() {
@@ -187,19 +199,22 @@ public class RegisterPanel extends FormPanel {
                   LanguageUtil.getInstance().getString("login_button_login"));
           ModalDialog.popModel(ApplicationConfiguration.getInstance().getLoginId());
         });
+
     cmdSignUp.addActionListener(
         actionEvent -> {
-          String email = txtEmail.getText();
+          String email = txtEmail.getText().trim();
           String password = new String(txtPassword.getPassword());
           String rePassword = new String(txtRePassword.getPassword());
-          String fullName = txtFullName.getText();
-          NotificationUtil.getInstance()
-              .show(
-                  this,
-                  Toast.Type.SUCCESS,
-                  LanguageUtil.getInstance().getString("register_successfully"));
-          ModalDialog.popModel(ApplicationConfiguration.getInstance().getLoginId());
+          String birthday = txtDateOfBirth.getText().trim();
+          String fullName = txtFullName.getText().trim();
+
+          if (!validateInput(email, password, rePassword, fullName, birthday)) {
+            return;
+          }
+
+          performRegister(email, password, fullName, birthday);
         });
+
     ItemListener itemListener =
         e -> {
           if (e.getStateChange() == ItemEvent.SELECTED) {
@@ -218,6 +233,65 @@ public class RegisterPanel extends FormPanel {
     radioDefault.addItemListener(itemListener);
   }
 
+  private void performRegister(String email, String password, String fullName, String birthday) {
+    cmdSignUp.setEnabled(false);
+
+    RegisterRequest req = new RegisterRequest(email, password, birthday, fullName, gender);
+
+    httpService
+        .sendRegisterRequest(req)
+        .thenAccept(
+            response -> {
+              SwingUtilities.invokeLater(
+                  () -> {
+                    cmdSignUp.setEnabled(true);
+                    txtEmail.setText("");
+                    txtFullName.setText("");
+                    txtPassword.setText("");
+                    txtRePassword.setText("");
+                    txtDateOfBirth.setText("");
+                    NotificationUtil.getInstance()
+                        .show(
+                            this,
+                            Toast.Type.SUCCESS,
+                            LanguageUtil.getInstance().getString("register_successfully"));
+                    ModalDialog.popModel(ApplicationConfiguration.getInstance().getLoginId());
+                  });
+            })
+        .exceptionally(
+            ex -> {
+              SwingUtilities.invokeLater(
+                  () -> {
+                    String errorMsgKey = "register_failed";
+                    String errorBody =
+                        ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
+                    if (errorBody != null) {
+                      try {
+                        ErrorResponse errorResponse = gson.fromJson(errorBody, ErrorResponse.class);
+
+                        if ("EmailAlready".equals(errorResponse.code())) {
+                          errorMsgKey = "register_email_exists";
+                        } else if ("InvalidRequest".equals(errorResponse.code())) {
+                          errorMsgKey = "register_empty_fields";
+                        }
+
+                      } catch (JsonSyntaxException e) {
+                        if (errorBody.contains("ConnectException")
+                            || errorBody.contains("Network")) {
+                          errorMsgKey = "server_error";
+                        }
+                      }
+                    } else {
+                      errorMsgKey = "server_error";
+                    }
+
+                    showWarning(errorMsgKey);
+                    cmdSignUp.setEnabled(true);
+                  });
+              return null;
+            });
+  }
+
   private void initialized() {
     txtEmail = new JTextField();
     txtFullName = new JTextField();
@@ -231,5 +305,77 @@ public class RegisterPanel extends FormPanel {
     radioDefault = new JRadioButton(LanguageUtil.getInstance().getString("register_gender_other"));
 
     gender = -1;
+  }
+
+  private boolean isValidEmail(String email) {
+    String emailRegex =
+        "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
+    Pattern pat = Pattern.compile(emailRegex);
+    return email != null && pat.matcher(email).matches();
+  }
+
+  private boolean isValidDate(String dateStr) {
+    if (dateStr == null || dateStr.length() != 10) {
+      return false;
+    }
+
+    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+    sdf.setLenient(false);
+
+    try {
+      Date date = sdf.parse(dateStr);
+
+      Calendar cal = Calendar.getInstance();
+      cal.setTime(date);
+      int year = cal.get(Calendar.YEAR);
+      int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+      return year >= 1900 && year < currentYear;
+    } catch (ParseException e) {
+      return false;
+    }
+  }
+
+  private void showWarning(String languageKey) {
+    NotificationUtil.getInstance()
+        .show(this, Toast.Type.WARNING, LanguageUtil.getInstance().getString(languageKey));
+  }
+
+  private boolean validateInput(
+      String email, String pass, String rePass, String fullName, String birthday) {
+    if (email.isBlank()
+        || pass.isBlank()
+        || rePass.isBlank()
+        || fullName.isBlank()
+        || birthday.isBlank()) {
+      showWarning("register_empty_fields");
+      return false;
+    }
+
+    if (gender == -1) {
+      showWarning("register_empty_fields");
+      return false;
+    }
+
+    if (!isValidEmail(email)) {
+      showWarning("register_invalid_email");
+      return false;
+    }
+
+    if (!isValidDate(birthday)) {
+      showWarning("register_invalid_birthday");
+      return false;
+    }
+
+    if (pass.length() < 6) {
+      showWarning("register_password_short");
+      return false;
+    }
+
+    if (!pass.equals(rePass)) {
+      showWarning("register_match_password");
+      return false;
+    }
+
+    return true;
   }
 }

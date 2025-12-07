@@ -1,5 +1,6 @@
 package com.vn.nghlong3004.client.configuration;
 
+import com.google.gson.Gson;
 import com.vn.nghlong3004.client.constant.GameConstant;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,8 +20,9 @@ public final class ApplicationConfiguration {
   private int fps = 0;
   private int ups = 0;
 
-  @Getter
-  private final String loginId = UUID.randomUUID().toString();
+  @Getter private final String loginId;
+
+  @Getter private final Gson gson;
 
   private final Properties properties;
 
@@ -30,6 +32,8 @@ public final class ApplicationConfiguration {
 
   private ApplicationConfiguration() {
     properties = new Properties();
+    gson = new Gson();
+    loginId = UUID.randomUUID().toString();
     try (InputStream inputStream =
         ApplicationConfiguration.class.getResourceAsStream(GameConstant.APPLICATION_PATH)) {
       if (inputStream == null) {
@@ -43,6 +47,10 @@ public final class ApplicationConfiguration {
       log.error("{} error close file: message {}", GameConstant.APPLICATION_PATH, e.getMessage());
       throw new RuntimeException(e);
     }
+  }
+
+  public String getServerUrl() {
+    return getPropertyValue("application.server.url");
   }
 
   public int getFps() {

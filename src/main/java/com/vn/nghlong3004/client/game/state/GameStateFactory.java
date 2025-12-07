@@ -5,8 +5,12 @@ import static com.vn.nghlong3004.client.constant.ButtonConstant.MENU_BUTTON_WIDT
 import static com.vn.nghlong3004.client.constant.GameConstant.GAME_HEIGHT;
 import static com.vn.nghlong3004.client.constant.GameConstant.GAME_WIDTH;
 
+import com.google.gson.Gson;
+import com.vn.nghlong3004.client.configuration.ApplicationConfiguration;
+import com.vn.nghlong3004.client.configuration.WebApplication;
 import com.vn.nghlong3004.client.constant.ImageConstant;
 import com.vn.nghlong3004.client.game.GamePanel;
+import com.vn.nghlong3004.client.service.HttpService;
 import com.vn.nghlong3004.client.util.ImageUtil;
 import com.vn.nghlong3004.client.util.LanguageUtil;
 import com.vn.nghlong3004.client.view.*;
@@ -37,11 +41,14 @@ public final class GameStateFactory {
             .setAnimationEnabled(true)
             .setOpacity(0.5f)
             .setSliderDuration(600);
+    HttpService httpService = WebApplication.getInstance().getHttpService();
+    Gson gson = ApplicationConfiguration.getInstance().getGson();
     String icon = "images/account.svg";
     LoginPanel login = new LoginPanel();
     CustomModalBorder loginPanel = new CustomModalBorder(login, "Sign In", icon);
     icon = "images/register.svg";
-    CustomModalBorder registerPanel = new CustomModalBorder(new RegisterPanel(), "Sign Up", icon);
+    CustomModalBorder registerPanel =
+        new CustomModalBorder(new RegisterPanel(httpService, gson), "Sign Up", icon);
 
     icon = "images/forgot_password.svg";
     CustomModalBorder forgotPasswordPanel =
