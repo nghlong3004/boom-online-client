@@ -10,4 +10,5 @@ public final class APIConstant {
 
   public static final String REGISTER = "/auth/register";
   public static final String LOGIN = "/auth/login";
+  public static final String FORGOT_PASSWORD = "/auth/forgot-password";
 }

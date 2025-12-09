@@ -16,6 +16,8 @@ public class LanguageUtil {
   private ResourceBundle resourceBundle;
   @Getter private Locale currentLocale;
 
+  private String currentLanguage;
+
   private LanguageUtil() {
     loadResource("vi");
   }

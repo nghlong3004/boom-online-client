@@ -2,13 +2,21 @@ package com.vn.nghlong3004.client.view;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.vn.nghlong3004.client.configuration.ApplicationConfiguration;
+import com.vn.nghlong3004.client.model.request.ForgotPasswordRequest;
+import com.vn.nghlong3004.client.model.response.ErrorResponse;
 import com.vn.nghlong3004.client.service.HttpService;
 import com.vn.nghlong3004.client.util.LanguageUtil;
 import com.vn.nghlong3004.client.util.NotificationUtil;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.regex.Pattern;
 import javax.swing.*;
+import lombok.extern.slf4j.Slf4j;
 import net.miginfocom.swing.MigLayout;
 import raven.modal.ModalDialog;
 import raven.modal.Toast;
@@ -19,7 +27,10 @@ import raven.modal.Toast;
  * @author nghlong3004
  * @since 12/7/2025
  */
+@Slf4j
 public class ForgotPasswordPanel extends FormPanel {
+  private final JTextField txtEmail;
+  private Timer timer;
 
   public ForgotPasswordPanel(HttpService httpService, Gson gson) {
     super(httpService, gson);
@@ -38,7 +49,7 @@ public class ForgotPasswordPanel extends FormPanel {
     lbEmail.putClientProperty(FlatClientProperties.STYLE, "font:bold;");
     add(lbEmail);
 
-    JTextField txtEmail = new JTextField();
+    txtEmail = new JTextField();
     txtEmail.putClientProperty(
         FlatClientProperties.PLACEHOLDER_TEXT,
         LanguageUtil.getInstance().getString("login_username"));
@@ -79,25 +90,133 @@ public class ForgotPasswordPanel extends FormPanel {
                   this,
                   Toast.Type.INFO,
                   LanguageUtil.getInstance().getString("login_button_login"));
+          if (timer != null) {
+            timer.stop();
+          }
+          txtEmail.setText("");
+          txtOTP.setText("");
+          cmdSubmit.setEnabled(false);
+          txtOTP.setEnabled(false);
           ModalDialog.popModel(ApplicationConfiguration.getInstance().getLoginId());
         });
+  }
+
+  private boolean isValidEmail(String email) {
+    String emailRegex =
+        "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
+    Pattern pat = Pattern.compile(emailRegex);
+    return email != null && pat.matcher(email).matches();
   }
 
   private void installRevealButton(JTextField txt, JTextField txtOTP, JButton cmdSubmit) {
     JToolBar toolBar = new JToolBar();
     toolBar.putClientProperty(FlatClientProperties.STYLE, "margin:0,0,0,5;");
-    JButton button = new JButton("Gửi mã OTP");
-
+    JButton button = new JButton(LanguageUtil.getInstance().getString("forgot_password_btn_otp"));
     button.addActionListener(
         new ActionListener() {
+          private boolean show = true;
+
           @Override
-          public void actionPerformed(ActionEvent actionEvent) {}
+          public void actionPerformed(ActionEvent actionEvent) {
+            if (show) {
+              if (!isValidEmail(txtEmail.getText())) {
+                showError("invalid_email");
+                return;
+              }
+              ForgotPasswordRequest request =
+                  new ForgotPasswordRequest(
+                      txtEmail.getText(),
+                      LanguageUtil.getInstance().getCurrentLocale().getLanguage());
+              LocalDateTime startTime = LocalDateTime.now().plus(Duration.ofSeconds(60 * 5));
+              timer =
+                  new Timer(
+                      100,
+                      e -> {
+                        Duration duration = Duration.between(LocalDateTime.now(), startTime);
+                        long second = duration.getSeconds();
+                        int seconds = (int) second % (60 * 5);
+                        String zero = "";
+                        if (seconds < 10) {
+                          zero = "0";
+                        }
+                        button.setText(zero + second);
+                        if (seconds == 0) {
+                          show = true;
+                          button.setText(
+                              LanguageUtil.getInstance().getString("forgot_password_btn_otp"));
+                          timer.stop();
+                        }
+                      });
+              timer.start();
+              httpService
+                  .sendForgotPassword(request)
+                  .thenAccept(
+                      responseBody -> {
+                        SwingUtilities.invokeLater(
+                            () ->
+                                show(
+                                    Toast.Type.INFO,
+                                    LanguageUtil.getInstance()
+                                        .getString("forgot_password_send_otp")));
+                        cmdSubmit.setEnabled(true);
+                        txtOTP.setEnabled(true);
+                        show = false;
+                      })
+                  .exceptionally(
+                      e -> {
+                        Throwable throwable = e.getCause();
+                        String rawMessage =
+                            (throwable != null) ? throwable.getMessage() : e.getMessage();
+                        String messageKey = mapErrorToMessageKey(rawMessage);
+                        SwingUtilities.invokeLater(
+                            () -> {
+                              showError(messageKey);
+                              show = true;
+                              button.setText(
+                                  LanguageUtil.getInstance().getString("forgot_password_btn_otp"));
+                              timer.stop();
+                            });
+                        return null;
+                      });
+            }
+          }
         });
     toolBar.add(button);
     txt.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, toolBar);
   }
 
-  private Timer timer;
+  private String mapErrorToMessageKey(String errorBody) {
+    if (errorBody == null) return "server_error";
+
+    if (errorBody.contains("ConnectException") || errorBody.contains("Network")) {
+      return "server_error";
+    }
+
+    try {
+      ErrorResponse errorResponse = gson.fromJson(errorBody, ErrorResponse.class);
+
+      if (errorResponse != null && errorResponse.code() != null) {
+        return switch (errorResponse.code()) {
+          case "EmailIncorrect" -> "forgot_password_send_otp_email_incorrect";
+          default -> "unknown_error";
+        };
+      }
+    } catch (JsonSyntaxException ignored) {
+      log.error("Cannot parse error body: {}", errorBody);
+      return "server_error";
+    }
+
+    return "login_failed";
+  }
+
+  private void showError(String langKey) {
+    NotificationUtil.getInstance()
+        .show(this, Toast.Type.ERROR, LanguageUtil.getInstance().getString(langKey));
+  }
+
+  private void show(Toast.Type type, String message) {
+    NotificationUtil.getInstance().show(this, type, message);
+  }
 
   private class CreatePassword extends JPanel {
 

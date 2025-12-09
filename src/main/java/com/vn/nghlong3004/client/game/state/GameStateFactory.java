@@ -7,7 +7,7 @@ import static com.vn.nghlong3004.client.constant.GameConstant.GAME_WIDTH;
 
 import com.google.gson.Gson;
 import com.vn.nghlong3004.client.configuration.ApplicationConfiguration;
-import com.vn.nghlong3004.client.configuration.WebApplication;
+import com.vn.nghlong3004.client.configuration.WebConfiguration;
 import com.vn.nghlong3004.client.constant.ImageConstant;
 import com.vn.nghlong3004.client.game.GamePanel;
 import com.vn.nghlong3004.client.service.HttpService;
@@ -41,7 +41,7 @@ public final class GameStateFactory {
             .setAnimationEnabled(true)
             .setOpacity(0.5f)
             .setSliderDuration(600);
-    HttpService httpService = WebApplication.getInstance().getHttpService();
+    HttpService httpService = WebConfiguration.getInstance().getHttpService();
     Gson gson = ApplicationConfiguration.getInstance().getGson();
 
     LoginPanel login = new LoginPanel(httpService, gson);
