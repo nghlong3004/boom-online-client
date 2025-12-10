@@ -1,10 +1,12 @@
-package com.vn.nghlong3004.client.view.welcome;
+package com.vn.nghlong3004.client.controller.view.welcome;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.vn.nghlong3004.client.configuration.ApplicationConfiguration;
 import com.vn.nghlong3004.client.context.ApplicationContext;
+import com.vn.nghlong3004.client.controller.view.CustomModalBorder;
+import com.vn.nghlong3004.client.controller.view.component.ButtonLink;
 import com.vn.nghlong3004.client.model.request.ForgotPasswordRequest;
 import com.vn.nghlong3004.client.model.request.OTPRequest;
 import com.vn.nghlong3004.client.model.response.ErrorResponse;
@@ -12,8 +14,6 @@ import com.vn.nghlong3004.client.model.response.OTPResponse;
 import com.vn.nghlong3004.client.service.HttpService;
 import com.vn.nghlong3004.client.util.LanguageUtil;
 import com.vn.nghlong3004.client.util.NotificationUtil;
-import com.vn.nghlong3004.client.view.CustomModalBorder;
-import com.vn.nghlong3004.client.view.component.ButtonLink;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.time.Duration;

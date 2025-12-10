@@ -1,23 +1,18 @@
-package com.vn.nghlong3004.client.view.welcome;
+package com.vn.nghlong3004.client.controller.view.welcome;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 import com.vn.nghlong3004.client.configuration.ApplicationConfiguration;
-import com.vn.nghlong3004.client.model.request.RegisterRequest;
-import com.vn.nghlong3004.client.model.response.ErrorResponse;
+import com.vn.nghlong3004.client.controller.RegisterPresenter;
+import com.vn.nghlong3004.client.controller.RegisterView;
+import com.vn.nghlong3004.client.controller.presenter.RegisterPresenterImpl;
+import com.vn.nghlong3004.client.controller.view.component.ButtonLink;
 import com.vn.nghlong3004.client.service.HttpService;
 import com.vn.nghlong3004.client.util.LanguageUtil;
 import com.vn.nghlong3004.client.util.NotificationUtil;
-import com.vn.nghlong3004.client.view.component.ButtonLink;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.regex.Pattern;
 import javax.swing.*;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
@@ -35,33 +30,38 @@ import raven.modal.Toast;
  * @since 12/7/2025
  */
 @Slf4j
-public class RegisterPanel extends FormPanel {
+public class RegisterPanel extends FormPanel implements RegisterView {
 
   private JTextField txtFullName;
   private JTextField txtEmail;
-  private final JTextField txtDateOfBirth;
+  private JTextField txtDateOfBirth;
 
   private JPasswordField txtPassword;
   private JPasswordField txtRePassword;
 
-  private final JButton cmdSignUp;
-  private final ButtonLink cmdBackLogin;
+  private JButton cmdSignUp;
+  private ButtonLink cmdBackLogin;
 
   private ButtonGroup groupPeople;
-
   private JRadioButton radioMale;
   private JRadioButton radioFemale;
   private JRadioButton radioDefault;
 
   private int gender = -1;
 
+  private final RegisterPresenter presenter;
+
   public RegisterPanel(HttpService httpService, Gson gson) {
     super(httpService, gson);
+    this.presenter = new RegisterPresenterImpl(this, httpService, gson);
+
     setLayout(new MigLayout("al center center"));
     JPanel panel = new JPanel();
     panel.setLayout(new MigLayout("insets n 2 n 2,fillx,wrap,width 300", "[fill,300]"));
+
     initialized();
-    JTextArea text = new JTextArea(LanguageUtil.getInstance().getString("register_title"));
+
+    JTextArea text = new JTextArea(getText("register_title"));
     text.setEditable(false);
     text.setFocusable(false);
     text.putClientProperty(FlatClientProperties.STYLE, "border:0,0,0,0;" + "background:null;");
@@ -73,43 +73,36 @@ public class RegisterPanel extends FormPanel {
     lbEmail.putClientProperty(FlatClientProperties.STYLE, "font:bold;");
     panel.add(lbEmail);
 
-    txtEmail.putClientProperty(
-        FlatClientProperties.PLACEHOLDER_TEXT,
-        LanguageUtil.getInstance().getString("login_username"));
+    txtEmail.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, getText("login_username"));
     panel.add(txtEmail);
 
-    JLabel lbFullName = new JLabel(LanguageUtil.getInstance().getString("register_full_name"));
+    JLabel lbFullName = new JLabel(getText("register_full_name"));
     lbFullName.putClientProperty(FlatClientProperties.STYLE, "font:bold;");
     panel.add(lbFullName);
 
     txtFullName.putClientProperty(
-        FlatClientProperties.PLACEHOLDER_TEXT,
-        LanguageUtil.getInstance().getString("register_holder_place_full_name"));
+        FlatClientProperties.PLACEHOLDER_TEXT, getText("register_holder_place_full_name"));
     panel.add(txtFullName);
 
-    JLabel lbPassword =
-        new JLabel(LanguageUtil.getInstance().getString("register_holder_place_password"));
+    JLabel lbPassword = new JLabel(getText("register_holder_place_password"));
     lbPassword.putClientProperty(FlatClientProperties.STYLE, "font:bold;");
     panel.add(lbPassword, "gapy 2 n");
 
     txtPassword.putClientProperty(
-        FlatClientProperties.PLACEHOLDER_TEXT,
-        LanguageUtil.getInstance().getString("register_password"));
+        FlatClientProperties.PLACEHOLDER_TEXT, getText("register_password"));
     panel.add(txtPassword);
 
-    JLabel lbRePassword =
-        new JLabel(LanguageUtil.getInstance().getString("register_relay_password"));
+    JLabel lbRePassword = new JLabel(getText("register_relay_password"));
     lbRePassword.putClientProperty(FlatClientProperties.STYLE, "font:bold;");
     panel.add(lbRePassword, "gapy 2 n");
 
     installRevealButton(txtPassword);
     installRevealButton(txtRePassword);
     txtRePassword.putClientProperty(
-        FlatClientProperties.PLACEHOLDER_TEXT,
-        LanguageUtil.getInstance().getString("register_holder_place_relay_password"));
+        FlatClientProperties.PLACEHOLDER_TEXT, getText("register_holder_place_relay_password"));
     panel.add(txtRePassword);
 
-    JLabel lbDateOfBirth = new JLabel(LanguageUtil.getInstance().getString("register_birthday"));
+    JLabel lbDateOfBirth = new JLabel(getText("register_birthday"));
     lbDateOfBirth.putClientProperty(FlatClientProperties.STYLE, "font:bold;");
     panel.add(lbDateOfBirth, "gapy 2 n");
 
@@ -118,7 +111,7 @@ public class RegisterPanel extends FormPanel {
     ((AbstractDocument) txtDateOfBirth.getDocument()).setDocumentFilter(getDocumentFilter());
     panel.add(txtDateOfBirth);
 
-    JLabel lbNote = new JLabel(LanguageUtil.getInstance().getString("register_note"));
+    JLabel lbNote = new JLabel(getText("register_note"));
     lbNote.putClientProperty(
         FlatClientProperties.STYLE, "font:-1;" + "foreground:$Label.disabledForeground;");
     panel.add(lbNote);
@@ -130,26 +123,72 @@ public class RegisterPanel extends FormPanel {
     groupPeople.add(radioFemale);
     groupPeople.add(radioDefault);
 
-    panelGender.add(new JLabel(LanguageUtil.getInstance().getString("register_gender")));
+    panelGender.add(new JLabel(getText("register_gender")));
     panelGender.add(radioMale);
     panelGender.add(radioFemale);
     panelGender.add(radioDefault, "wrap");
     panel.add(panelGender);
 
-    cmdSignUp = new ButtonLink(LanguageUtil.getInstance().getString("register_button_register"));
+    cmdSignUp = new ButtonLink(getText("register_button_register"));
     cmdSignUp.putClientProperty(FlatClientProperties.STYLE, "foreground:#FFFFFF;");
     panel.add(cmdSignUp);
 
     panel.add(new JSeparator(), "gapy 2 2");
 
-    panel.add(
-        new JLabel(LanguageUtil.getInstance().getString("register_login")), "split 2, gapx push n");
+    panel.add(new JLabel(getText("register_login")), "split 2, gapx push n");
 
-    cmdBackLogin = new ButtonLink(LanguageUtil.getInstance().getString("register_button_login"));
+    cmdBackLogin = new ButtonLink(getText("register_button_login"));
     panel.add(cmdBackLogin, "gapx n push");
     add(panel);
+
     // event
     action();
+  }
+
+  private void initialized() {
+    txtEmail = new JTextField();
+    txtFullName = new JTextField();
+
+    txtPassword = new JPasswordField();
+    txtRePassword = new JPasswordField();
+
+    groupPeople = new ButtonGroup();
+    radioFemale = new JRadioButton(getText("register_gender_female"));
+    radioMale = new JRadioButton(getText("register_gender_male"));
+    radioDefault = new JRadioButton(getText("register_gender_other"));
+
+    gender = -1;
+  }
+
+  private void action() {
+    cmdBackLogin.addActionListener(
+        actionEvent -> {
+          NotificationUtil.getInstance().show(this, Toast.Type.INFO, getText("login_button_login"));
+          presenter.onLoginClicked();
+        });
+
+    cmdSignUp.addActionListener(
+        actionEvent -> {
+          NotificationUtil.getInstance().show(this, Toast.Type.INFO, getText("handler"));
+          presenter.handleRegister();
+        });
+
+    ItemListener itemListener =
+        e -> {
+          if (e.getStateChange() == ItemEvent.SELECTED) {
+            JRadioButton selected = (JRadioButton) e.getItem();
+            if (selected.equals(radioMale)) {
+              gender = 0;
+            } else if (selected.equals(radioFemale)) {
+              gender = 1;
+            } else if (selected.equals(radioDefault)) {
+              gender = 2;
+            }
+          }
+        };
+    radioMale.addItemListener(itemListener);
+    radioFemale.addItemListener(itemListener);
+    radioDefault.addItemListener(itemListener);
   }
 
   private DocumentFilter getDocumentFilter() {
@@ -188,88 +227,37 @@ public class RegisterPanel extends FormPanel {
     };
   }
 
-  private void action() {
-    cmdBackLogin.addActionListener(
-        actionEvent -> {
-          NotificationUtil.getInstance()
-              .show(
-                  this,
-                  Toast.Type.INFO,
-                  LanguageUtil.getInstance().getString("login_button_login"));
-          ModalDialog.popModel(ApplicationConfiguration.getInstance().getLoginId());
-        });
-
-    cmdSignUp.addActionListener(
-        actionEvent -> {
-          NotificationUtil.getInstance()
-              .show(this, Toast.Type.INFO, LanguageUtil.getInstance().getString("handler"));
-          String email = txtEmail.getText().trim();
-          String password = new String(txtPassword.getPassword());
-          String rePassword = new String(txtRePassword.getPassword());
-          String birthday = txtDateOfBirth.getText().trim();
-          String fullName = txtFullName.getText().trim();
-
-          if (!validateInput(email, password, rePassword, fullName, birthday)) {
-            return;
-          }
-
-          handleRegister(email, password, fullName, birthday);
-        });
-
-    ItemListener itemListener =
-        e -> {
-          if (e.getStateChange() == ItemEvent.SELECTED) {
-            JRadioButton selected = (JRadioButton) e.getItem();
-            if (selected.equals(radioMale)) {
-              gender = 0;
-            } else if (selected.equals(radioFemale)) {
-              gender = 1;
-            } else if (selected.equals(radioDefault)) {
-              gender = 2;
-            }
-          }
-        };
-    radioMale.addItemListener(itemListener);
-    radioFemale.addItemListener(itemListener);
-    radioDefault.addItemListener(itemListener);
+  private String getText(String key) {
+    return LanguageUtil.getInstance().getString(key);
   }
 
-  private void handleRegister(String email, String password, String fullName, String birthday) {
-    cmdSignUp.setEnabled(false);
-
-    RegisterRequest request = new RegisterRequest(email, password, birthday, fullName, gender);
-
-    httpService
-        .sendRegisterRequest(request)
-        .thenAccept(response -> SwingUtilities.invokeLater(this::onRegisterSuccess))
-        .exceptionally(
-            ex -> {
-              Throwable cause = ex.getCause();
-              String rawMessage = (cause != null) ? cause.getMessage() : ex.getMessage();
-              String messageKey = mapErrorToMessageKey(rawMessage);
-              SwingUtilities.invokeLater(
-                  () -> {
-                    showWarning(messageKey);
-                    cmdSignUp.setEnabled(true);
-                  });
-              return null;
-            });
+  @Override
+  public void showLoading(boolean isLoading) {
+    SwingUtilities.invokeLater(() -> cmdSignUp.setEnabled(!isLoading));
   }
 
-  private void onRegisterSuccess() {
-    cmdSignUp.setEnabled(true);
-    clearRegisterForm();
-
-    NotificationUtil.getInstance()
-        .show(
-            this,
-            Toast.Type.SUCCESS,
-            LanguageUtil.getInstance().getString("register_successfully"));
-
-    ModalDialog.popModel(ApplicationConfiguration.getInstance().getLoginId());
+  @Override
+  public void showSuccessMessage() {
+    SwingUtilities.invokeLater(
+        () ->
+            NotificationUtil.getInstance()
+                .show(this, Toast.Type.SUCCESS, getText("register_successfully")));
   }
 
-  private void clearRegisterForm() {
+  @Override
+  public void showWarning(String messageKey) {
+    SwingUtilities.invokeLater(
+        () -> NotificationUtil.getInstance().show(this, Toast.Type.WARNING, getText(messageKey)));
+  }
+
+  @Override
+  public void navigateToLogin() {
+    SwingUtilities.invokeLater(
+        () -> ModalDialog.popModel(ApplicationConfiguration.getInstance().getLoginId()));
+  }
+
+  @Override
+  public void clearForm() {
     txtEmail.setText("");
     txtFullName.setText("");
     txtPassword.setText("");
@@ -277,114 +265,33 @@ public class RegisterPanel extends FormPanel {
     txtDateOfBirth.setText("");
   }
 
-  private String mapErrorToMessageKey(String errorBody) {
-    if (errorBody == null) return "server_error";
-    if (errorBody.contains("ConnectException") || errorBody.contains("Network is unreachable")) {
-      return "server_error";
-    }
-
-    try {
-      ErrorResponse errorResponse = gson.fromJson(errorBody, ErrorResponse.class);
-      if (errorResponse != null && errorResponse.code() != null) {
-        return switch (errorResponse.code()) {
-          case "EmailAlready" -> "register_email_exists";
-          case "InvalidRequest" -> "register_empty_fields";
-          case "InternalError" -> "server_internal";
-          default -> "register_failed";
-        };
-      }
-    } catch (JsonSyntaxException ignored) {
-      log.error("Cannot parse error body: {}", errorBody);
-      return "unknown_error";
-    }
-
-    return "register_failed";
+  @Override
+  public String getEmail() {
+    return txtEmail.getText().trim();
   }
 
-  private void initialized() {
-    txtEmail = new JTextField();
-    txtFullName = new JTextField();
-
-    txtPassword = new JPasswordField();
-    txtRePassword = new JPasswordField();
-
-    groupPeople = new ButtonGroup();
-    radioFemale = new JRadioButton(LanguageUtil.getInstance().getString("register_gender_female"));
-    radioMale = new JRadioButton(LanguageUtil.getInstance().getString("register_gender_male"));
-    radioDefault = new JRadioButton(LanguageUtil.getInstance().getString("register_gender_other"));
-
-    gender = -1;
+  @Override
+  public String getFullName() {
+    return txtFullName.getText().trim();
   }
 
-  private boolean isValidEmail(String email) {
-    String emailRegex =
-        "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
-    Pattern pat = Pattern.compile(emailRegex);
-    return email != null && pat.matcher(email).matches();
+  @Override
+  public String getPassword() {
+    return new String(txtPassword.getPassword());
   }
 
-  private boolean isValidDate(String dateStr) {
-    if (dateStr == null || dateStr.length() != 10) {
-      return false;
-    }
-
-    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-    sdf.setLenient(false);
-
-    try {
-      Date date = sdf.parse(dateStr);
-
-      Calendar cal = Calendar.getInstance();
-      cal.setTime(date);
-      int year = cal.get(Calendar.YEAR);
-      int currentYear = Calendar.getInstance().get(Calendar.YEAR);
-      return year >= 1900 && year < currentYear;
-    } catch (ParseException e) {
-      return false;
-    }
+  @Override
+  public String getRePassword() {
+    return new String(txtRePassword.getPassword());
   }
 
-  private void showWarning(String languageKey) {
-    NotificationUtil.getInstance()
-        .show(this, Toast.Type.WARNING, LanguageUtil.getInstance().getString(languageKey));
+  @Override
+  public String getBirthday() {
+    return txtDateOfBirth.getText().trim();
   }
 
-  private boolean validateInput(
-      String email, String pass, String rePass, String fullName, String birthday) {
-    if (email.isBlank()
-        || pass.isBlank()
-        || rePass.isBlank()
-        || fullName.isBlank()
-        || birthday.isBlank()) {
-      showWarning("register_empty_fields");
-      return false;
-    }
-
-    if (gender == -1) {
-      showWarning("register_empty_fields");
-      return false;
-    }
-
-    if (!isValidEmail(email)) {
-      showWarning("invalid_email");
-      return false;
-    }
-
-    if (!isValidDate(birthday)) {
-      showWarning("register_invalid_birthday");
-      return false;
-    }
-
-    if (pass.length() < 6) {
-      showWarning("password_short");
-      return false;
-    }
-
-    if (!pass.equals(rePass)) {
-      showWarning("register_match_password");
-      return false;
-    }
-
-    return true;
+  @Override
+  public int getGender() {
+    return this.gender;
   }
 }

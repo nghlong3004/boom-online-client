@@ -107,7 +107,11 @@ public class LoginPanel extends FormPanel implements LoginView {
     panelLogin.add(loginContent);
     add(panelLogin);
 
-    cmdLogin.addActionListener(e -> presenter.handleLogin());
+    cmdLogin.addActionListener(
+        e -> {
+          NotificationUtil.getInstance().show(this, Toast.Type.INFO, getText("handler"));
+          presenter.handleLogin();
+        });
     txtPassword.addActionListener(e -> presenter.handleLogin());
 
     cmdSignUp.addActionListener(

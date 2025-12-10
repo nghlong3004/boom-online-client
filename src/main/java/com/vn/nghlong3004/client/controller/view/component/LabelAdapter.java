@@ -1,4 +1,4 @@
-package com.vn.nghlong3004.client.view.component;
+package com.vn.nghlong3004.client.controller.view.component;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;

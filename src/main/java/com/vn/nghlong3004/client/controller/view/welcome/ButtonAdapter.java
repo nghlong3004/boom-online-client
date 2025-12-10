@@ -1,4 +1,4 @@
-package com.vn.nghlong3004.client.view.welcome;
+package com.vn.nghlong3004.client.controller.view.welcome;
 
 import com.vn.nghlong3004.client.game.GameLogic;
 import java.awt.*;

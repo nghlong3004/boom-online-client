@@ -1,16 +1,16 @@
-package com.vn.nghlong3004.client.view.welcome;
+package com.vn.nghlong3004.client.controller.view.welcome;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.vn.nghlong3004.client.configuration.ApplicationConfiguration;
 import com.vn.nghlong3004.client.context.ApplicationContext;
+import com.vn.nghlong3004.client.controller.view.component.ButtonLink;
 import com.vn.nghlong3004.client.model.request.ResetPasswordRequest;
 import com.vn.nghlong3004.client.model.response.ErrorResponse;
 import com.vn.nghlong3004.client.service.HttpService;
 import com.vn.nghlong3004.client.util.LanguageUtil;
 import com.vn.nghlong3004.client.util.NotificationUtil;
-import com.vn.nghlong3004.client.view.component.ButtonLink;
 import javax.swing.*;
 import lombok.extern.slf4j.Slf4j;
 import net.miginfocom.swing.MigLayout;
