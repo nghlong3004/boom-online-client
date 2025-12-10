@@ -1,4 +1,4 @@
-package com.vn.nghlong3004.client.view;
+package com.vn.nghlong3004.client.controller.view.component;
 
 import static com.vn.nghlong3004.client.constant.ButtonConstant.MENU_BUTTON_HEIGHT;
 import static com.vn.nghlong3004.client.constant.ButtonConstant.MENU_BUTTON_WIDTH;
@@ -6,6 +6,7 @@ import static com.vn.nghlong3004.client.constant.GameConstant.SCALE;
 import static com.vn.nghlong3004.client.constant.ImageConstant.BUTTON;
 import static com.vn.nghlong3004.client.constant.ImageConstant.BUTTON_TOUCH;
 
+import com.vn.nghlong3004.client.controller.view.welcome.ButtonAdapter;
 import com.vn.nghlong3004.client.util.ImageUtil;
 import java.awt.*;
 import java.awt.image.BufferedImage;
