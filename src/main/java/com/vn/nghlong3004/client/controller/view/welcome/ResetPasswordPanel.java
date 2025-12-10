@@ -2,17 +2,15 @@ package com.vn.nghlong3004.client.controller.view.welcome;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 import com.vn.nghlong3004.client.configuration.ApplicationConfiguration;
-import com.vn.nghlong3004.client.context.ApplicationContext;
+import com.vn.nghlong3004.client.controller.ResetPasswordPresenter;
+import com.vn.nghlong3004.client.controller.ResetPasswordView;
+import com.vn.nghlong3004.client.controller.presenter.ResetPasswordPresenterImpl;
 import com.vn.nghlong3004.client.controller.view.component.ButtonLink;
-import com.vn.nghlong3004.client.model.request.ResetPasswordRequest;
-import com.vn.nghlong3004.client.model.response.ErrorResponse;
 import com.vn.nghlong3004.client.service.HttpService;
 import com.vn.nghlong3004.client.util.LanguageUtil;
 import com.vn.nghlong3004.client.util.NotificationUtil;
 import javax.swing.*;
-import lombok.extern.slf4j.Slf4j;
 import net.miginfocom.swing.MigLayout;
 import raven.modal.ModalDialog;
 import raven.modal.Toast;
@@ -23,12 +21,23 @@ import raven.modal.Toast;
  * @author nghlong3004
  * @since 12/10/2025
  */
-@Slf4j
-public class ResetPasswordPanel extends FormPanel {
+public class ResetPasswordPanel extends FormPanel implements ResetPasswordView {
+
+  private JPasswordField txtPassword;
+  private JPasswordField txtRePassword;
+  private JButton cmdSubmit;
+
+  private final ResetPasswordPresenter presenter;
 
   public ResetPasswordPanel(HttpService httpService, Gson gson) {
     super(httpService, gson);
+    this.presenter = new ResetPasswordPresenterImpl(this, httpService, gson);
+    initUI();
+  }
+
+  private void initUI() {
     setLayout(new MigLayout("insets n 20 n 20,fillx,wrap,width 380", "[fill]"));
+
     JTextArea text = new JTextArea(getText("reset_password_description"));
     text.setEditable(false);
     text.setFocusable(false);
@@ -40,7 +49,8 @@ public class ResetPasswordPanel extends FormPanel {
     JLabel lbPassword = new JLabel(getText("reset_password_holder_place_password"));
     lbPassword.putClientProperty(FlatClientProperties.STYLE, "font:bold;");
     add(lbPassword, "gapy 10 n");
-    JPasswordField txtPassword = new JPasswordField();
+
+    txtPassword = new JPasswordField();
     installRevealButton(txtPassword);
     txtPassword.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, getText("login_password"));
     add(txtPassword);
@@ -49,99 +59,66 @@ public class ResetPasswordPanel extends FormPanel {
     lbRePassword.putClientProperty(FlatClientProperties.STYLE, "font:bold;");
     add(lbRePassword, "gapy 10 n");
 
-    JPasswordField txtRePassword = new JPasswordField();
+    txtRePassword = new JPasswordField();
     installRevealButton(txtRePassword);
     txtRePassword.putClientProperty(
         FlatClientProperties.PLACEHOLDER_TEXT,
         getText("reset_password_holder_place_re_password_text"));
     add(txtRePassword);
 
-    JButton cmdSubmit = new ButtonLink("Submit");
+    cmdSubmit = new ButtonLink("Submit");
     cmdSubmit.putClientProperty(FlatClientProperties.STYLE, "foreground:#FFFFFF;");
-
     add(cmdSubmit, "gapy 15 15");
-    cmdSubmit.addActionListener(
-        actionEvent -> {
-          String password = new String(txtPassword.getPassword());
-          String rePassword = new String(txtRePassword.getPassword());
 
-          if (password.length() <= 6) {
-            NotificationUtil.getInstance()
-                .show(this, Toast.Type.WARNING, getText("validation_password_length_error"));
-            return;
-          }
-
-          if (!password.equals(rePassword)) {
-            NotificationUtil.getInstance()
-                .show(this, Toast.Type.WARNING, getText("validation_password_match_error"));
-            return;
-          }
-
-          NotificationUtil.getInstance()
-              .show(this, Toast.Type.INFO, LanguageUtil.getInstance().getString("handler"));
-
-          String email = ApplicationContext.getInstance().getEmail();
-          String token = ApplicationContext.getInstance().getVerificationToken();
-          String lang = LanguageUtil.getInstance().getCurrentLocale().getLanguage();
-
-          ResetPasswordRequest request = new ResetPasswordRequest(token, email, password, lang);
-
-          cmdSubmit.setEnabled(false);
-          httpService
-              .sendResetPassword(request)
-              .thenAccept(
-                  responseBody -> {
-                    cmdSubmit.setEnabled(true);
-                    NotificationUtil.getInstance()
-                        .show(
-                            this,
-                            Toast.Type.SUCCESS,
-                            LanguageUtil.getInstance().getString("register_successfully"));
-                    ModalDialog.popModel(ApplicationConfiguration.getInstance().getLoginId());
-                  })
-              .exceptionally(
-                  e -> {
-                    Throwable throwable = e.getCause();
-                    String rawMessage =
-                        (throwable != null) ? throwable.getMessage() : e.getMessage();
-                    String messageKey = mapErrorToMessageKey(rawMessage);
-                    cmdSubmit.setEnabled(true);
-                    showError(messageKey);
-                    return null;
-                  });
-        });
-  }
-
-  private void showError(String langKey) {
-    NotificationUtil.getInstance()
-        .show(this, Toast.Type.ERROR, LanguageUtil.getInstance().getString(langKey));
-  }
-
-  private String mapErrorToMessageKey(String errorBody) {
-    if (errorBody == null) return "server_error";
-
-    if (errorBody.contains("ConnectException") || errorBody.contains("Network")) {
-      return "server_error";
-    }
-
-    try {
-      ErrorResponse errorResponse = gson.fromJson(errorBody, ErrorResponse.class);
-
-      if (errorResponse != null && errorResponse.code() != null) {
-        return switch (errorResponse.code()) {
-          case "TokenIncorrect" -> "reset_password_bad_credentials";
-          default -> "unknown_error";
-        };
-      }
-    } catch (JsonSyntaxException ignored) {
-      log.error("Cannot parse error body: {}", errorBody);
-      return "server_error";
-    }
-
-    return "login_failed";
+    cmdSubmit.addActionListener(actionEvent -> presenter.handleSubmit());
   }
 
   private String getText(String key) {
     return LanguageUtil.getInstance().getString(key);
+  }
+
+  @Override
+  public void showLoading(boolean isLoading) {
+    SwingUtilities.invokeLater(() -> cmdSubmit.setEnabled(!isLoading));
+  }
+
+  @Override
+  public void showSuccess(String messageKey) {
+    SwingUtilities.invokeLater(
+        () -> NotificationUtil.getInstance().show(this, Toast.Type.SUCCESS, getText(messageKey)));
+  }
+
+  @Override
+  public void showWarning(String messageKey) {
+    SwingUtilities.invokeLater(
+        () -> NotificationUtil.getInstance().show(this, Toast.Type.WARNING, getText(messageKey)));
+  }
+
+  @Override
+  public void showError(String messageKey) {
+    SwingUtilities.invokeLater(
+        () -> NotificationUtil.getInstance().show(this, Toast.Type.ERROR, getText(messageKey)));
+  }
+
+  @Override
+  public void showInfo(String messageKey) {
+    SwingUtilities.invokeLater(
+        () -> NotificationUtil.getInstance().show(this, Toast.Type.INFO, getText(messageKey)));
+  }
+
+  @Override
+  public void closeModal() {
+    SwingUtilities.invokeLater(
+        () -> ModalDialog.popModel(ApplicationConfiguration.getInstance().getLoginId()));
+  }
+
+  @Override
+  public String getPassword() {
+    return new String(txtPassword.getPassword());
+  }
+
+  @Override
+  public String getRePassword() {
+    return new String(txtRePassword.getPassword());
   }
 }

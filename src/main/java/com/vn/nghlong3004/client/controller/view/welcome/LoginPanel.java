@@ -15,7 +15,6 @@ import com.vn.nghlong3004.client.util.NotificationUtil;
 import java.awt.*;
 import javax.swing.*;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 import net.miginfocom.swing.MigLayout;
 import raven.modal.ModalDialog;
 import raven.modal.Toast;
@@ -27,7 +26,6 @@ import raven.modal.component.DropShadowBorder;
  * @author nghlong3004
  * @since 12/7/2025
  */
-@Slf4j
 public class LoginPanel extends FormPanel implements LoginView {
 
   private JTextField txtUsername;

@@ -18,7 +18,6 @@ import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
-import lombok.extern.slf4j.Slf4j;
 import net.miginfocom.swing.MigLayout;
 import raven.modal.ModalDialog;
 import raven.modal.Toast;
@@ -29,7 +28,6 @@ import raven.modal.Toast;
  * @author nghlong3004
  * @since 12/7/2025
  */
-@Slf4j
 public class RegisterPanel extends FormPanel implements RegisterView {
 
   private JTextField txtFullName;
@@ -141,7 +139,6 @@ public class RegisterPanel extends FormPanel implements RegisterView {
     panel.add(cmdBackLogin, "gapx n push");
     add(panel);
 
-    // event
     action();
   }
 
