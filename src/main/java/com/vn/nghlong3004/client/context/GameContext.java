@@ -8,7 +8,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,11 +18,18 @@ import lombok.extern.slf4j.Slf4j;
  * @since 12/6/2025
  */
 @Slf4j
-@RequiredArgsConstructor
 public class GameContext implements GameAdapter {
 
   private GameState state;
   @Setter private Map<GameStateType, GameState> stateMap;
+
+  private GameContext(){
+    
+  }
+
+  public static GameContext getInstance() {
+    return HOLDER.INSTANCE;
+  }
 
   public void previousState() {
     state.previous(this);
@@ -109,5 +115,9 @@ public class GameContext implements GameAdapter {
     if (state != null) {
       state.mouseWheelMoved(e);
     }
+  }
+
+  private static final class HOLDER {
+    private static final GameContext INSTANCE = new GameContext();
   }
 }

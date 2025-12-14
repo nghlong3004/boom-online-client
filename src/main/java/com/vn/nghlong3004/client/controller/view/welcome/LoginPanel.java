@@ -72,6 +72,7 @@ public class LoginPanel extends FormPanel implements LoginView {
 
     JButton cmdForgotPassword = new ButtonLink(getText("login_forgot_password"));
     JButton cmdSignUp = new ButtonLink(getText("login_button_register"));
+    JButton cmdPlayingNow = new ButtonLink(getText("button_playing_now"));
 
     txtUsername.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, getText("login_username"));
     txtPassword.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, getText("login_password"));
@@ -99,6 +100,8 @@ public class LoginPanel extends FormPanel implements LoginView {
     loginContent.add(getCmdExternal());
     loginContent.add(new JLabel(getText("login_register_description")), "split 2,gapx push n");
     loginContent.add(cmdSignUp, "gapx n push");
+    loginContent.add(new JLabel(getText("login_playing_now_description")), "split 2,gapx push n");
+    loginContent.add(cmdPlayingNow, "gapx n push");
 
     panelLogin.add(loginContent);
     add(panelLogin);
@@ -153,13 +156,13 @@ public class LoginPanel extends FormPanel implements LoginView {
   @Override
   public void closeLoginModal() {
     SwingUtilities.invokeLater(
-        () -> ModalDialog.closeModal(ApplicationConfiguration.getInstance().getLoginId()));
+        () -> ModalDialog.closeModal(ApplicationConfiguration.getInstance().getWelcomeId()));
   }
 
   @Override
   public void openRegisterModal() {
     if (registerPanel != null) {
-      ModalDialog.pushModal(registerPanel, ApplicationConfiguration.getInstance().getLoginId());
+      ModalDialog.pushModal(registerPanel, ApplicationConfiguration.getInstance().getWelcomeId());
     }
   }
 
@@ -167,7 +170,7 @@ public class LoginPanel extends FormPanel implements LoginView {
   public void openForgotPasswordModal() {
     if (forgotPasswordPanel != null) {
       ModalDialog.pushModal(
-          forgotPasswordPanel, ApplicationConfiguration.getInstance().getLoginId());
+          forgotPasswordPanel, ApplicationConfiguration.getInstance().getWelcomeId());
     }
   }
 

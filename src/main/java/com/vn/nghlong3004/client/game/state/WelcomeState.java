@@ -34,16 +34,20 @@ public class WelcomeState implements GameState {
   private final BufferedImage background;
 
   @Override
-  public void previous(GameContext gameContext) {}
+  public void previous(GameContext gameContext) {
+    gameContext.changeState(GameStateType.WELCOME);
+  }
 
   @Override
-  public void next(GameContext gameContext) {}
+  public void next(GameContext gameContext) {
+    gameContext.changeState(GameStateType.HOME);
+  }
 
   @Override
   public void print() {
-    if (!ModalDialog.isIdExist(loginPanel.toString())) {
+    if (!ModalDialog.isIdExist(ApplicationConfiguration.getInstance().getWelcomeId())) {
       ModalDialog.showModal(
-          gamePanel, loginPanel, option, ApplicationConfiguration.getInstance().getLoginId());
+          gamePanel, loginPanel, option, ApplicationConfiguration.getInstance().getWelcomeId());
       NotificationUtil.getInstance()
           .show(
               gamePanel,
@@ -55,14 +59,14 @@ public class WelcomeState implements GameState {
   @Override
   public void render(Graphics g) {
     g.drawImage(background, 0, 0, GAME_WIDTH, GAME_HEIGHT, null);
-    if (!ModalDialog.isIdExist(loginPanel.toString())) {
+    if (!ModalDialog.isIdExist(ApplicationConfiguration.getInstance().getWelcomeId())) {
       buttonAdapter.render(g);
     }
   }
 
   @Override
   public void mousePressed(MouseEvent e) {
-    if (!ModalDialog.isIdExist(loginPanel.toString())) {
+    if (!ModalDialog.isIdExist(ApplicationConfiguration.getInstance().getWelcomeId())) {
       if (buttonAdapter.isMouseOver(e)) {
         buttonAdapter.setMousePressed(true);
       }
@@ -71,7 +75,7 @@ public class WelcomeState implements GameState {
 
   @Override
   public void mouseReleased(MouseEvent e) {
-    if (!ModalDialog.isIdExist(loginPanel.toString())) {
+    if (!ModalDialog.isIdExist(ApplicationConfiguration.getInstance().getWelcomeId())) {
       if (buttonAdapter.isMouseOver(e)) {
         print();
       }
@@ -81,9 +85,9 @@ public class WelcomeState implements GameState {
 
   @Override
   public void mouseMoved(MouseEvent e) {
-    if (!ModalDialog.isIdExist(loginPanel.toString())) {
+    if (!ModalDialog.isIdExist(ApplicationConfiguration.getInstance().getWelcomeId())) {
       buttonAdapter.setMouseOver(false);
-      if (buttonAdapter.isMouseOver()) {
+      if (buttonAdapter.isMouseOver(e)) {
         buttonAdapter.setMouseOver(true);
       }
     }

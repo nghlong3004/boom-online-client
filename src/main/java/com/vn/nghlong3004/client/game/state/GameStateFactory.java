@@ -1,7 +1,7 @@
 package com.vn.nghlong3004.client.game.state;
 
-import static com.vn.nghlong3004.client.constant.ButtonConstant.MENU_BUTTON_HEIGHT;
-import static com.vn.nghlong3004.client.constant.ButtonConstant.MENU_BUTTON_WIDTH;
+import static com.vn.nghlong3004.client.constant.ButtonConstant.BUTTON_HEIGHT;
+import static com.vn.nghlong3004.client.constant.ButtonConstant.BUTTON_WIDTH;
 import static com.vn.nghlong3004.client.constant.GameConstant.GAME_HEIGHT;
 import static com.vn.nghlong3004.client.constant.GameConstant.GAME_WIDTH;
 
@@ -11,6 +11,7 @@ import com.vn.nghlong3004.client.configuration.WebConfiguration;
 import com.vn.nghlong3004.client.constant.ImageConstant;
 import com.vn.nghlong3004.client.controller.view.CustomModalBorder;
 import com.vn.nghlong3004.client.controller.view.component.TextButton;
+import com.vn.nghlong3004.client.controller.view.home.SettingPanel;
 import com.vn.nghlong3004.client.controller.view.welcome.*;
 import com.vn.nghlong3004.client.game.GamePanel;
 import com.vn.nghlong3004.client.service.HttpService;
@@ -33,16 +34,38 @@ public final class GameStateFactory {
   public static Map<GameStateType, GameState> createStateMap(GamePanel gamePanel) {
     Map<GameStateType, GameState> stateMap = new EnumMap<>(GameStateType.class);
     stateMap.put(GameStateType.WELCOME, createWelcomeState(gamePanel));
+    stateMap.put(GameStateType.HOME, createHomeState(gamePanel));
     return stateMap;
   }
 
+  private static GameState createHomeState(GamePanel gamePanel) {
+    BufferedImage background = ImageUtil.loadImage(ImageConstant.HOME_BACKGROUND);
+    TextButton[] homeButtons = new TextButton[3];
+
+    int x = GAME_WIDTH - BUTTON_WIDTH >>> 1;
+    int factor = GAME_HEIGHT - BUTTON_HEIGHT >>> 1;
+    int spacing = BUTTON_HEIGHT * 5 / 4;
+
+    String[] texts = {"START", "SETTING", "QUIT"};
+
+    for (int i = 0; i < 3; i++) {
+      int y = factor + i * spacing;
+      homeButtons[i] = new TextButton(x, y, texts[i]);
+    }
+    Option option = createOption();
+    CustomModalBorder settingPanel = createSetting();
+
+    return HomeState.builder()
+        .background(background)
+        .homeButtons(homeButtons)
+        .gamePanel(gamePanel)
+        .settingPanel(settingPanel)
+        .option(option)
+        .build();
+  }
+
   private static GameState createWelcomeState(GamePanel gamePanel) {
-    Option option =
-        ModalDialog.createOption()
-            .setCloseOnPressedEscape(false)
-            .setAnimationEnabled(true)
-            .setOpacity(0.5f)
-            .setSliderDuration(600);
+    Option option = createOption();
     HttpService httpService = WebConfiguration.getInstance().getHttpService();
     Gson gson = ApplicationConfiguration.getInstance().getGson();
 
@@ -67,8 +90,8 @@ public final class GameStateFactory {
     login.setRegisterPanel(registerPanel);
     login.setForgotPasswordPanel(forgotPasswordPanel);
     forgotPassword.setResetPasswordPanel(resetPasswordPanel);
-    int x = GAME_WIDTH - MENU_BUTTON_WIDTH >>> 1;
-    int y = GAME_HEIGHT - MENU_BUTTON_HEIGHT >>> 1;
+    int x = GAME_WIDTH - BUTTON_WIDTH >>> 1;
+    int y = GAME_HEIGHT - BUTTON_HEIGHT >>> 1;
     ButtonAdapter buttonAdapter =
         new TextButton(x, y, LanguageUtil.getInstance().getString("welcome_button"));
     BufferedImage background = ImageUtil.loadImage(ImageConstant.WELCOME_BACKGROUND);
@@ -79,5 +102,18 @@ public final class GameStateFactory {
         .buttonAdapter(buttonAdapter)
         .background(background)
         .build();
+  }
+
+  private static CustomModalBorder createSetting() {
+    String icon = "images/setting.svg";
+    return new CustomModalBorder(new SettingPanel(), "Setting", icon);
+  }
+
+  private static Option createOption() {
+    return ModalDialog.createOption()
+        .setCloseOnPressedEscape(false)
+        .setAnimationEnabled(true)
+        .setOpacity(0.5f)
+        .setSliderDuration(600);
   }
 }

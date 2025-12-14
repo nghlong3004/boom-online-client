@@ -1,7 +1,7 @@
 package com.vn.nghlong3004.client.controller.view.component;
 
-import static com.vn.nghlong3004.client.constant.ButtonConstant.MENU_BUTTON_HEIGHT;
-import static com.vn.nghlong3004.client.constant.ButtonConstant.MENU_BUTTON_WIDTH;
+import static com.vn.nghlong3004.client.constant.ButtonConstant.BUTTON_HEIGHT;
+import static com.vn.nghlong3004.client.constant.ButtonConstant.BUTTON_WIDTH;
 import static com.vn.nghlong3004.client.constant.GameConstant.SCALE;
 import static com.vn.nghlong3004.client.constant.ImageConstant.BUTTON;
 import static com.vn.nghlong3004.client.constant.ImageConstant.BUTTON_TOUCH;
@@ -23,7 +23,7 @@ public class TextButton extends ButtonAdapter {
   private final String text;
 
   public TextButton(int x, int y, String text) {
-    super(x, y, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, 0);
+    super(x, y, BUTTON_WIDTH, BUTTON_HEIGHT, 0);
     this.text = text;
     loadImage();
   }
@@ -47,7 +47,7 @@ public class TextButton extends ButtonAdapter {
     BufferedImage currentImage = (mouseOver || mousePressed) ? buttonTouchImage : buttonImage;
 
     if (currentImage != null) {
-      g.drawImage(currentImage, x, y, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, null);
+      g.drawImage(currentImage, x, y, BUTTON_WIDTH, BUTTON_HEIGHT, null);
     }
 
     int fontSize = (int) (24 * SCALE);
@@ -58,8 +58,8 @@ public class TextButton extends ButtonAdapter {
     int textWidth = fm.stringWidth(text);
     int textHeight = fm.getHeight();
 
-    int textX = x + (MENU_BUTTON_WIDTH - textWidth) / 2;
-    int textY = y + (MENU_BUTTON_HEIGHT - textHeight) / 2 + fm.getAscent();
+    int textX = x + (BUTTON_WIDTH - textWidth) / 2;
+    int textY = y + (BUTTON_HEIGHT - textHeight) / 2 + fm.getAscent();
 
     if (mousePressed) {
       textY += 2;
