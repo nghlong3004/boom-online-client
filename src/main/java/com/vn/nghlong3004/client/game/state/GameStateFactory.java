@@ -1,7 +1,7 @@
 package com.vn.nghlong3004.client.game.state;
 
-import static com.vn.nghlong3004.client.constant.ButtonConstant.MENU_BUTTON_HEIGHT;
-import static com.vn.nghlong3004.client.constant.ButtonConstant.MENU_BUTTON_WIDTH;
+import static com.vn.nghlong3004.client.constant.ButtonConstant.BUTTON_HEIGHT;
+import static com.vn.nghlong3004.client.constant.ButtonConstant.BUTTON_WIDTH;
 import static com.vn.nghlong3004.client.constant.GameConstant.GAME_HEIGHT;
 import static com.vn.nghlong3004.client.constant.GameConstant.GAME_WIDTH;
 
@@ -38,7 +38,9 @@ public final class GameStateFactory {
   }
 
   private static GameState createHomeState(GamePanel gamePanel) {
-    return new HomeState();
+    BufferedImage background = ImageUtil.loadImage(ImageConstant.HOME_BACKGROUND);
+
+    return HomeState.builder().background(background).build();
   }
 
   private static GameState createWelcomeState(GamePanel gamePanel) {
@@ -72,8 +74,8 @@ public final class GameStateFactory {
     login.setRegisterPanel(registerPanel);
     login.setForgotPasswordPanel(forgotPasswordPanel);
     forgotPassword.setResetPasswordPanel(resetPasswordPanel);
-    int x = GAME_WIDTH - MENU_BUTTON_WIDTH >>> 1;
-    int y = GAME_HEIGHT - MENU_BUTTON_HEIGHT >>> 1;
+    int x = GAME_WIDTH - BUTTON_WIDTH >>> 1;
+    int y = GAME_HEIGHT - BUTTON_HEIGHT >>> 1;
     ButtonAdapter buttonAdapter =
         new TextButton(x, y, LanguageUtil.getInstance().getString("welcome_button"));
     BufferedImage background = ImageUtil.loadImage(ImageConstant.WELCOME_BACKGROUND);

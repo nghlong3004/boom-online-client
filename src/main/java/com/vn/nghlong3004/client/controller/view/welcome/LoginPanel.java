@@ -153,13 +153,13 @@ public class LoginPanel extends FormPanel implements LoginView {
   @Override
   public void closeLoginModal() {
     SwingUtilities.invokeLater(
-        () -> ModalDialog.closeModal(ApplicationConfiguration.getInstance().getLoginId()));
+        () -> ModalDialog.closeModal(ApplicationConfiguration.getInstance().getWelcomeId()));
   }
 
   @Override
   public void openRegisterModal() {
     if (registerPanel != null) {
-      ModalDialog.pushModal(registerPanel, ApplicationConfiguration.getInstance().getLoginId());
+      ModalDialog.pushModal(registerPanel, ApplicationConfiguration.getInstance().getWelcomeId());
     }
   }
 
@@ -167,7 +167,7 @@ public class LoginPanel extends FormPanel implements LoginView {
   public void openForgotPasswordModal() {
     if (forgotPasswordPanel != null) {
       ModalDialog.pushModal(
-          forgotPasswordPanel, ApplicationConfiguration.getInstance().getLoginId());
+          forgotPasswordPanel, ApplicationConfiguration.getInstance().getWelcomeId());
     }
   }
 

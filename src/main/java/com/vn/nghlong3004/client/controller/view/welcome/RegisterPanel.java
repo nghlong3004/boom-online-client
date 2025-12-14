@@ -249,7 +249,7 @@ public class RegisterPanel extends FormPanel implements RegisterView {
   @Override
   public void navigateToLogin() {
     SwingUtilities.invokeLater(
-        () -> ModalDialog.popModel(ApplicationConfiguration.getInstance().getLoginId()));
+        () -> ModalDialog.popModel(ApplicationConfiguration.getInstance().getWelcomeId()));
   }
 
   @Override

@@ -155,7 +155,7 @@ public class ForgotPasswordPanel extends FormPanel implements ForgotPasswordView
   @Override
   public void navigateToLogin() {
     SwingUtilities.invokeLater(
-        () -> ModalDialog.popModel(ApplicationConfiguration.getInstance().getLoginId()));
+        () -> ModalDialog.popModel(ApplicationConfiguration.getInstance().getWelcomeId()));
   }
 
   @Override
@@ -164,7 +164,7 @@ public class ForgotPasswordPanel extends FormPanel implements ForgotPasswordView
         () -> {
           if (resetPasswordPanel != null) {
             ModalDialog.pushModal(
-                resetPasswordPanel, ApplicationConfiguration.getInstance().getLoginId());
+                resetPasswordPanel, ApplicationConfiguration.getInstance().getWelcomeId());
           }
         });
   }

@@ -108,7 +108,7 @@ public class ResetPasswordPanel extends FormPanel implements ResetPasswordView {
   @Override
   public void closeModal() {
     SwingUtilities.invokeLater(
-        () -> ModalDialog.popModel(ApplicationConfiguration.getInstance().getLoginId()));
+        () -> ModalDialog.popModel(ApplicationConfiguration.getInstance().getWelcomeId()));
   }
 
   @Override

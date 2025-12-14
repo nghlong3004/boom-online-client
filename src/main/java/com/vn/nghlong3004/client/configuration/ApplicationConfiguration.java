@@ -20,7 +20,7 @@ public final class ApplicationConfiguration {
   private int fps = 0;
   private int ups = 0;
 
-  @Getter private final String loginId;
+  @Getter private final String welcomeId;
 
   @Getter private final Gson gson;
 
@@ -33,7 +33,7 @@ public final class ApplicationConfiguration {
   private ApplicationConfiguration() {
     properties = new Properties();
     gson = new Gson();
-    loginId = UUID.randomUUID().toString();
+    welcomeId = UUID.randomUUID().toString();
     try (InputStream inputStream =
         ApplicationConfiguration.class.getResourceAsStream(GameConstant.APPLICATION_PATH)) {
       if (inputStream == null) {
