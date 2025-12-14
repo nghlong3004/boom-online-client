@@ -26,7 +26,7 @@ public final class GameFactory {
   }
 
   private static GameContext createGameContext() {
-    return new GameContext();
+    return GameContext.getInstance();
   }
 
   private static GamePanel createGamePanel(GameAdapter gameContext) {

@@ -3,6 +3,7 @@ package com.vn.nghlong3004.client.controller.presenter;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.vn.nghlong3004.client.context.ApplicationContext;
+import com.vn.nghlong3004.client.context.GameContext;
 import com.vn.nghlong3004.client.controller.LoginPresenter;
 import com.vn.nghlong3004.client.controller.LoginView;
 import com.vn.nghlong3004.client.model.request.LoginRequest;
@@ -65,7 +66,7 @@ public class LoginPresenterImpl implements LoginPresenter {
                 view.showSuccessMessage();
                 view.clearForm();
                 view.closeLoginModal();
-
+                GameContext.getInstance().next();
               } catch (Exception e) {
                 log.error(e.getLocalizedMessage());
                 view.showError("server_error");

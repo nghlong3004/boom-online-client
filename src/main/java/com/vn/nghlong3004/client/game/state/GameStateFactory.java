@@ -33,7 +33,12 @@ public final class GameStateFactory {
   public static Map<GameStateType, GameState> createStateMap(GamePanel gamePanel) {
     Map<GameStateType, GameState> stateMap = new EnumMap<>(GameStateType.class);
     stateMap.put(GameStateType.WELCOME, createWelcomeState(gamePanel));
+    stateMap.put(GameStateType.HOME, createHomeState(gamePanel));
     return stateMap;
+  }
+
+  private static GameState createHomeState(GamePanel gamePanel) {
+    return new HomeState();
   }
 
   private static GameState createWelcomeState(GamePanel gamePanel) {

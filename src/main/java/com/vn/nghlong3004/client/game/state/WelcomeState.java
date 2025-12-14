@@ -34,14 +34,18 @@ public class WelcomeState implements GameState {
   private final BufferedImage background;
 
   @Override
-  public void previous(GameContext gameContext) {}
+  public void previous(GameContext gameContext) {
+    gameContext.changeState(GameStateType.WELCOME);
+  }
 
   @Override
-  public void next(GameContext gameContext) {}
+  public void next(GameContext gameContext) {
+    gameContext.changeState(GameStateType.HOME);
+  }
 
   @Override
   public void print() {
-    if (!ModalDialog.isIdExist(loginPanel.toString())) {
+    if (!ModalDialog.isIdExist(ApplicationConfiguration.getInstance().getLoginId())) {
       ModalDialog.showModal(
           gamePanel, loginPanel, option, ApplicationConfiguration.getInstance().getLoginId());
       NotificationUtil.getInstance()
