@@ -22,6 +22,8 @@ public final class ApplicationConfiguration {
 
   @Getter private final String welcomeId;
 
+  @Getter private final String homeId;
+
   @Getter private final Gson gson;
 
   private final Properties properties;
@@ -34,6 +36,7 @@ public final class ApplicationConfiguration {
     properties = new Properties();
     gson = new Gson();
     welcomeId = UUID.randomUUID().toString();
+    homeId = UUID.randomUUID().toString();
     try (InputStream inputStream =
         ApplicationConfiguration.class.getResourceAsStream(GameConstant.APPLICATION_PATH)) {
       if (inputStream == null) {

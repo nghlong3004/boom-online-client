@@ -39,8 +39,19 @@ public final class GameStateFactory {
 
   private static GameState createHomeState(GamePanel gamePanel) {
     BufferedImage background = ImageUtil.loadImage(ImageConstant.HOME_BACKGROUND);
+    TextButton[] homeButtons = new TextButton[3];
 
-    return HomeState.builder().background(background).build();
+    int x = GAME_WIDTH - BUTTON_WIDTH >>> 1;
+    int factor = GAME_HEIGHT - BUTTON_HEIGHT >>> 1;
+    int spacing = BUTTON_HEIGHT * 5 / 4;
+
+    String[] texts = {"START", "SETTING", "QUIT"};
+
+    for (int i = 0; i < 3; i++) {
+      int y = factor + i * spacing;
+      homeButtons[i] = new TextButton(x, y, texts[i]);
+    }
+    return HomeState.builder().background(background).homeButtons(homeButtons).build();
   }
 
   private static GameState createWelcomeState(GamePanel gamePanel) {

@@ -87,7 +87,7 @@ public class WelcomeState implements GameState {
   public void mouseMoved(MouseEvent e) {
     if (!ModalDialog.isIdExist(ApplicationConfiguration.getInstance().getWelcomeId())) {
       buttonAdapter.setMouseOver(false);
-      if (buttonAdapter.isMouseOver()) {
+      if (buttonAdapter.isMouseOver(e)) {
         buttonAdapter.setMouseOver(true);
       }
     }
