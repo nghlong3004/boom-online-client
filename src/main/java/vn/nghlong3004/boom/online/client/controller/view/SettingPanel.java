@@ -1,4 +1,4 @@
-package vn.nghlong3004.boom.online.client.view;
+package vn.nghlong3004.boom.online.client.controller.view;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import java.awt.*;
@@ -7,7 +7,7 @@ import net.miginfocom.swing.MigLayout;
 import raven.modal.ModalDialog;
 import raven.modal.Toast;
 import raven.modal.component.DropShadowBorder;
-import vn.nghlong3004.boom.online.client.presenter.SettingPresenter;
+import vn.nghlong3004.boom.online.client.controller.presenter.SettingPresenter;
 import vn.nghlong3004.boom.online.client.session.ApplicationSession;
 import vn.nghlong3004.boom.online.client.util.I18NUtil;
 import vn.nghlong3004.boom.online.client.util.NotificationUtil;

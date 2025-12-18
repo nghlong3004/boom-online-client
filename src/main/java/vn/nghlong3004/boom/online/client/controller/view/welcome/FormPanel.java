@@ -1,4 +1,4 @@
-package vn.nghlong3004.boom.online.client.view.welcome;
+package vn.nghlong3004.boom.online.client.controller.view.welcome;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;

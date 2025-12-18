@@ -1,4 +1,4 @@
-package vn.nghlong3004.boom.online.client.presenter;
+package vn.nghlong3004.boom.online.client.controller.presenter;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -9,10 +9,10 @@ import java.util.Date;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import vn.nghlong3004.boom.online.client.controller.view.welcome.RegisterPanel;
 import vn.nghlong3004.boom.online.client.model.request.RegisterRequest;
 import vn.nghlong3004.boom.online.client.model.response.ErrorResponse;
 import vn.nghlong3004.boom.online.client.service.HttpService;
-import vn.nghlong3004.boom.online.client.view.welcome.RegisterPanel;
 
 /**
  * Project: boom-online-client

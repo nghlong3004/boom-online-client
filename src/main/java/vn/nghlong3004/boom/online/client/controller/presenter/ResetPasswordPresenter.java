@@ -1,15 +1,15 @@
-package vn.nghlong3004.boom.online.client.presenter;
+package vn.nghlong3004.boom.online.client.controller.presenter;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import vn.nghlong3004.boom.online.client.controller.view.welcome.ResetPasswordPanel;
 import vn.nghlong3004.boom.online.client.model.request.ResetPasswordRequest;
 import vn.nghlong3004.boom.online.client.model.response.ErrorResponse;
 import vn.nghlong3004.boom.online.client.service.HttpService;
 import vn.nghlong3004.boom.online.client.session.ResetPasswordSession;
 import vn.nghlong3004.boom.online.client.util.I18NUtil;
-import vn.nghlong3004.boom.online.client.view.welcome.ResetPasswordPanel;
 
 /**
  * Project: boom-online-client

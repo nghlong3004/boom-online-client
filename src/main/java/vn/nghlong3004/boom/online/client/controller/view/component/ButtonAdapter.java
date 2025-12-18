@@ -1,4 +1,4 @@
-package vn.nghlong3004.boom.online.client.view.component;
+package vn.nghlong3004.boom.online.client.controller.view.component;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;

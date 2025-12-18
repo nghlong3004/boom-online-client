@@ -12,18 +12,18 @@ import java.util.Map;
 import raven.modal.ModalDialog;
 import raven.modal.option.Option;
 import vn.nghlong3004.boom.online.client.constant.ImageConstant;
+import vn.nghlong3004.boom.online.client.controller.view.CustomModalBorder;
+import vn.nghlong3004.boom.online.client.controller.view.SettingPanel;
+import vn.nghlong3004.boom.online.client.controller.view.component.TextButton;
+import vn.nghlong3004.boom.online.client.controller.view.welcome.ForgotPasswordPanel;
+import vn.nghlong3004.boom.online.client.controller.view.welcome.LoginPanel;
+import vn.nghlong3004.boom.online.client.controller.view.welcome.RegisterPanel;
+import vn.nghlong3004.boom.online.client.controller.view.welcome.ResetPasswordPanel;
 import vn.nghlong3004.boom.online.client.core.GameObjectContainer;
 import vn.nghlong3004.boom.online.client.core.GamePanel;
 import vn.nghlong3004.boom.online.client.service.HttpService;
 import vn.nghlong3004.boom.online.client.util.I18NUtil;
 import vn.nghlong3004.boom.online.client.util.ImageUtil;
-import vn.nghlong3004.boom.online.client.view.CustomModalBorder;
-import vn.nghlong3004.boom.online.client.view.SettingPanel;
-import vn.nghlong3004.boom.online.client.view.component.TextButton;
-import vn.nghlong3004.boom.online.client.view.welcome.ForgotPasswordPanel;
-import vn.nghlong3004.boom.online.client.view.welcome.LoginPanel;
-import vn.nghlong3004.boom.online.client.view.welcome.RegisterPanel;
-import vn.nghlong3004.boom.online.client.view.welcome.ResetPasswordPanel;
 
 /**
  * Project: boom-online-client

@@ -9,7 +9,7 @@ import vn.nghlong3004.boom.online.client.core.GameLaunch;
  * @author nghlong3004
  * @since 12/3/2025
  */
-public class BoomOnlineClient {
+public class BoomOnlineApplication {
   public static void main(String[] args) {
     SwingUtilities.invokeLater(GameLaunch::run);
   }

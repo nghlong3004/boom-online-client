@@ -1,4 +1,4 @@
-package vn.nghlong3004.boom.online.client.view.component;
+package vn.nghlong3004.boom.online.client.controller.view.component;
 
 import static vn.nghlong3004.boom.online.client.constant.ButtonConstant.BUTTON_HEIGHT;
 import static vn.nghlong3004.boom.online.client.constant.ButtonConstant.BUTTON_WIDTH;

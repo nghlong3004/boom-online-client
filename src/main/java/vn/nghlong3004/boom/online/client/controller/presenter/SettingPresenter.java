@@ -1,8 +1,8 @@
-package vn.nghlong3004.boom.online.client.presenter;
+package vn.nghlong3004.boom.online.client.controller.presenter;
 
 import lombok.RequiredArgsConstructor;
 import raven.modal.Toast;
-import vn.nghlong3004.boom.online.client.view.SettingPanel;
+import vn.nghlong3004.boom.online.client.controller.view.SettingPanel;
 
 /**
  * Project: boom-online-client

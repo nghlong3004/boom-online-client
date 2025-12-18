@@ -1,4 +1,4 @@
-package vn.nghlong3004.boom.online.client.view.welcome;
+package vn.nghlong3004.boom.online.client.controller.view.welcome;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.google.gson.Gson;
@@ -11,13 +11,13 @@ import raven.modal.ModalDialog;
 import raven.modal.Toast;
 import raven.modal.component.DropShadowBorder;
 import vn.nghlong3004.boom.online.client.constant.ImageConstant;
-import vn.nghlong3004.boom.online.client.presenter.LoginPresenter;
+import vn.nghlong3004.boom.online.client.controller.presenter.LoginPresenter;
+import vn.nghlong3004.boom.online.client.controller.view.CustomModalBorder;
+import vn.nghlong3004.boom.online.client.controller.view.component.ButtonLink;
 import vn.nghlong3004.boom.online.client.service.HttpService;
 import vn.nghlong3004.boom.online.client.session.ApplicationSession;
 import vn.nghlong3004.boom.online.client.util.I18NUtil;
 import vn.nghlong3004.boom.online.client.util.NotificationUtil;
-import vn.nghlong3004.boom.online.client.view.CustomModalBorder;
-import vn.nghlong3004.boom.online.client.view.component.ButtonLink;
 
 /**
  * Project: boom-online-client

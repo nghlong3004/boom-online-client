@@ -1,4 +1,4 @@
-package vn.nghlong3004.boom.online.client.view.component;
+package vn.nghlong3004.boom.online.client.controller.view.component;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import java.awt.*;

@@ -16,11 +16,11 @@ import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import raven.modal.ModalDialog;
 import raven.modal.option.Option;
+import vn.nghlong3004.boom.online.client.controller.view.CustomModalBorder;
+import vn.nghlong3004.boom.online.client.controller.view.component.TextButton;
 import vn.nghlong3004.boom.online.client.core.GameContext;
 import vn.nghlong3004.boom.online.client.core.GamePanel;
 import vn.nghlong3004.boom.online.client.session.ApplicationSession;
-import vn.nghlong3004.boom.online.client.view.CustomModalBorder;
-import vn.nghlong3004.boom.online.client.view.component.TextButton;
 
 /**
  * Project: boom-online-client

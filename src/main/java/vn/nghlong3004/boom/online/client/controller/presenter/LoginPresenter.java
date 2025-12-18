@@ -1,4 +1,4 @@
-package vn.nghlong3004.boom.online.client.presenter;
+package vn.nghlong3004.boom.online.client.controller.presenter;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import raven.modal.ModalDialog;
 import vn.nghlong3004.boom.online.client.constant.GameConstant;
+import vn.nghlong3004.boom.online.client.controller.view.welcome.LoginPanel;
 import vn.nghlong3004.boom.online.client.core.GameContext;
 import vn.nghlong3004.boom.online.client.model.User;
 import vn.nghlong3004.boom.online.client.model.request.LoginRequest;
@@ -15,7 +16,6 @@ import vn.nghlong3004.boom.online.client.model.response.LoginResponse;
 import vn.nghlong3004.boom.online.client.service.HttpService;
 import vn.nghlong3004.boom.online.client.session.ApplicationSession;
 import vn.nghlong3004.boom.online.client.session.UserSession;
-import vn.nghlong3004.boom.online.client.view.welcome.LoginPanel;
 
 /**
  * Project: boom-online-client
@@ -88,7 +88,7 @@ public class LoginPresenter {
 
   public void onPlayingNowClicked() {
     ApplicationSession.getInstance().setOfflineMode(true);
-    User user = User.builder().displayName(GameConstant.DISPLAY_NAME_DEFAULT).build();
+    User user = User.builder().id(1L).displayName(GameConstant.DISPLAY_NAME_DEFAULT).build();
     UserSession.getInstance().setSession(null, null, user);
     ModalDialog.closeModal(ApplicationSession.getInstance().getWelcomeId());
     GameContext.getInstance().next();
