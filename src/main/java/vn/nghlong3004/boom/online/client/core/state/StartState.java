@@ -6,9 +6,21 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import javax.swing.SwingUtilities;
 import lombok.Builder;
+import raven.modal.ModalDialog;
+import raven.modal.option.Option;
 import vn.nghlong3004.boom.online.client.constant.GameConstant;
+import vn.nghlong3004.boom.online.client.controller.view.CustomModalBorder;
+import vn.nghlong3004.boom.online.client.controller.view.lobby.LobbyPanel;
+import vn.nghlong3004.boom.online.client.controller.view.room.RoomPanel;
 import vn.nghlong3004.boom.online.client.core.GameContext;
+import vn.nghlong3004.boom.online.client.core.GameObjectContainer;
 import vn.nghlong3004.boom.online.client.core.GamePanel;
+import vn.nghlong3004.boom.online.client.model.User;
+import vn.nghlong3004.boom.online.client.model.room.Room;
+import vn.nghlong3004.boom.online.client.service.RoomService;
+import vn.nghlong3004.boom.online.client.session.ApplicationSession;
+import vn.nghlong3004.boom.online.client.session.UserSession;
+import vn.nghlong3004.boom.online.client.util.I18NUtil;
 
 /**
  * Project: boom-online-client
@@ -22,10 +34,19 @@ public class StartState implements GameState {
   private final GamePanel gamePanel;
 
   private final BufferedImage background;
+  private final Option option;
   private boolean installed;
 
   @Override
-  public void next(GameContext gameContext) {}
+  public void next(GameContext gameContext) {
+    gameContext.changeState(GameStateType.START);
+  }
+
+  @Override
+  public void previous(GameContext gameContext) {
+    SwingUtilities.invokeLater(this::uninstall);
+    gameContext.changeState(GameStateType.HOME);
+  }
 
   @Override
   public void mousePressed(MouseEvent e) {
@@ -67,13 +88,50 @@ public class StartState implements GameState {
     }
   }
 
-  @Override
-  public void previous(GameContext gameContext) {
-    SwingUtilities.invokeLater(this::uninstall);
-    gameContext.changeState(GameStateType.HOME);
+  private void install() {
+    String startId = ApplicationSession.getInstance().getStartId();
+    if (ModalDialog.isIdExist(startId)) {
+      return;
+    }
+
+    if (ApplicationSession.getInstance().isOfflineMode()) {
+      handleOffline(startId);
+    } else {
+      handleOnline(startId);
+    }
   }
 
-  private void install() {}
+  private void uninstall() {
+    String startId = ApplicationSession.getInstance().getStartId();
+    if (ModalDialog.isIdExist(startId)) {
+      ModalDialog.closeModal(startId);
+    }
+    installed = false;
+  }
 
-  private void uninstall() {}
+  private void handleOnline(String startId) {
+    RoomService roomService = GameObjectContainer.getOnlineRoomService();
+    LobbyPanel lobbyPanel = new LobbyPanel(roomService, startId);
+    CustomModalBorder lobbyBorder =
+        new CustomModalBorder(lobbyPanel, I18NUtil.getString("lobby.title"), null);
+
+    ModalDialog.showModal(gamePanel, lobbyBorder, option, startId);
+  }
+
+  private void handleOffline(String startId) {
+    RoomService roomService = GameObjectContainer.getOfflineRoomService();
+    User me = UserSession.getInstance().getCurrentUser();
+    if (me == null) {
+      GameContext.getInstance().previous();
+      return;
+    }
+
+    Room room = roomService.createRoom(me, null);
+    RoomPanel roomPanel = new RoomPanel(roomService, startId, false, null);
+    roomPanel.getPresenter().init(room);
+    CustomModalBorder roomBorder =
+        new CustomModalBorder(roomPanel, I18NUtil.getString("room.default_name.offline"), null);
+
+    ModalDialog.showModal(gamePanel, roomBorder, option, startId);
+  }
 }

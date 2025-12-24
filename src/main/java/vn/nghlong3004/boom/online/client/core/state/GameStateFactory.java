@@ -44,8 +44,12 @@ public final class GameStateFactory {
   }
 
   private static GameState createStartState(GamePanel gamePanel) {
-    BufferedImage background = ImageUtil.loadImage(ImageConstant.HOME_BACKGROUND);
-    return StartState.builder().background(background).gamePanel(gamePanel).build();
+    BufferedImage background = ImageUtil.loadImage(ImageConstant.SETTING_BACKGROUND);
+    return StartState.builder()
+        .background(background)
+        .gamePanel(gamePanel)
+        .option(createOption())
+        .build();
   }
 
   private static GameState createHomeState(GamePanel gamePanel) {
