@@ -44,55 +44,9 @@ public class RoomServiceImpl implements RoomService {
   }
 
   @Override
-  public Room joinRoom(String roomId, User user) {
-    Objects.requireNonNull(user, "user");
-    Room room = requireRoom(roomId);
-
-    for (PlayerSlot slot : room.getSlots()) {
-      if (slot != null && slot.isOccupied() && Objects.equals(slot.getUserId(), user.getId())) {
-        return room;
-      }
-    }
-
-    int emptyIndex = -1;
-    for (int i = 0; i < room.getSlots().size(); i++) {
-      PlayerSlot slot = room.getSlots().get(i);
-      if (slot == null || !slot.isOccupied()) {
-        emptyIndex = i;
-        break;
-      }
-    }
-    if (emptyIndex < 0) {
-      return room;
-    }
-
-    List<PlayerSlot> updatedSlots = new ArrayList<>(room.getSlots());
-    updatedSlots.set(
-        emptyIndex,
-        PlayerSlot.builder()
-            .index(emptyIndex)
-            .occupied(true)
-            .bot(false)
-            .userId(user.getId())
-            .displayName(user.getDisplayName())
-            .host(false)
-            .ready(false)
-            .characterIndex(0)
-            .build());
-
-    Room updated = copyWith(room, updatedSlots, room.getMapIndex(), room.getStatus());
-    updated
-        .getChat()
-        .add(
-            ChatMessage.builder()
-                .id(UUID.randomUUID().toString())
-                .type(ChatMessageType.SYSTEM)
-                .content(user.getDisplayName() + " đã vào phòng")
-                .created(Instant.now())
-                .build());
-
-    rooms.put(roomId, updated);
-    return updated;
+  public CompletableFuture<Room> joinRoom(String roomId, User user) {
+    String token = UserSession.getInstance().getAccessToken();
+    return httpService.joinRoom(roomId, token);
   }
 
   @Override

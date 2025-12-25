@@ -19,7 +19,7 @@ public interface RoomService {
 
   CompletableFuture<Room> createRoom(User owner, String roomName);
 
-  Room joinRoom(String roomId, User user);
+  CompletableFuture<Room> joinRoom(String roomId, User user);
 
   Room leaveRoom(String roomId, User user);
 

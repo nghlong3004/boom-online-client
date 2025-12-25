@@ -1,5 +1,6 @@
 package vn.nghlong3004.boom.online.client.core.state;
 
+import com.google.gson.Gson;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -109,7 +110,8 @@ public class StartState implements GameState {
 
   private void handleOnline(String startId) {
     RoomService roomService = GameObjectContainer.getOnlineRoomService();
-    LobbyPanel lobbyPanel = new LobbyPanel(roomService, startId);
+    Gson gson = GameObjectContainer.getGson();
+    LobbyPanel lobbyPanel = new LobbyPanel(roomService, startId, gson);
     CustomModalBorder lobbyBorder =
         new CustomModalBorder(lobbyPanel, I18NUtil.getString("lobby.title"), null);
 

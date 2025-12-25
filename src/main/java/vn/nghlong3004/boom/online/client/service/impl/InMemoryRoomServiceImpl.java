@@ -47,9 +47,8 @@ public class InMemoryRoomServiceImpl implements RoomService {
   }
 
   @Override
-  public Room joinRoom(String roomId, User user) {
-    // Offline: not used.
-    return getRoom(roomId);
+  public CompletableFuture<Room> joinRoom(String roomId, User user) {
+    return null;
   }
 
   @Override

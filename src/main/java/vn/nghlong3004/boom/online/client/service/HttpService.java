@@ -11,6 +11,8 @@ public interface HttpService {
 
   CompletableFuture<Room> createRoom(CreateRoomRequest request, String token);
 
+  CompletableFuture<Room> joinRoom(String roomId, String token);
+
   CompletableFuture<String> sendRegisterRequest(RegisterRequest registerRequest);
 
   CompletableFuture<String> sendLoginRequest(LoginRequest loginRequest);

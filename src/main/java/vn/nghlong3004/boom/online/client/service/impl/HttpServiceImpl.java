@@ -58,6 +58,19 @@ public class HttpServiceImpl implements HttpService {
   }
 
   @Override
+  public CompletableFuture<Room> joinRoom(String roomId, String token) {
+    String url = HTTP + serverUrl + "/rooms/" + roomId + "/join";
+    log.info("Joining room: {}", url);
+
+    HttpRequest request = buildPostRequest("", url, token);
+
+    return client
+        .sendAsync(request, HttpResponse.BodyHandlers.ofString())
+        .thenApply(this::handleResponse)
+        .thenApply(json -> gson.fromJson(json, Room.class));
+  }
+
+  @Override
   public CompletableFuture<String> sendRegisterRequest(RegisterRequest registerRequest) {
     String url = HTTP + serverUrl + "/auth/register";
     log.info("Initiating registration to URL: {}", url);

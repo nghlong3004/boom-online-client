@@ -1,6 +1,7 @@
 package vn.nghlong3004.boom.online.client.controller.view.lobby;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import com.google.gson.Gson;
 import java.awt.Cursor;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -43,10 +44,10 @@ public class LobbyPanel extends JPanel {
   private final JButton btnPrev;
   private final JButton btnNext;
 
-  public LobbyPanel(RoomService roomService, String modalId) {
+  public LobbyPanel(RoomService roomService, String modalId, Gson gson) {
     this.roomService = roomService;
     this.modalId = modalId;
-    this.presenter = new LobbyPresenter(this, roomService);
+    this.presenter = new LobbyPresenter(this, roomService, gson);
 
     setLayout(new MigLayout("fill, insets 15, wrap", "[grow,fill]", "[][grow,fill][]"));
 
