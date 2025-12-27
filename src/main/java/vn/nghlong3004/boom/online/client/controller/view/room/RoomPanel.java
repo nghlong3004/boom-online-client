@@ -24,6 +24,8 @@ import vn.nghlong3004.boom.online.client.model.room.ChatMessageType;
 import vn.nghlong3004.boom.online.client.model.room.PlayerSlot;
 import vn.nghlong3004.boom.online.client.model.room.Room;
 import vn.nghlong3004.boom.online.client.service.RoomService;
+import vn.nghlong3004.boom.online.client.service.WebSocketService;
+import vn.nghlong3004.boom.online.client.session.ApplicationSession;
 import vn.nghlong3004.boom.online.client.session.UserSession;
 import vn.nghlong3004.boom.online.client.util.I18NUtil;
 import vn.nghlong3004.boom.online.client.util.ImageUtil;
@@ -73,11 +75,14 @@ public class RoomPanel extends JPanel {
   private boolean forceScrollNextRender = false;
 
   public RoomPanel(
-      RoomService roomService, String modalId, boolean onlineMode, Runnable onLeaveOnlineRefresh) {
+      RoomService roomService,
+      String modalId,
+      Runnable onLeaveOnlineRefresh,
+      WebSocketService webSocketService) {
     this.modalId = modalId;
-    this.onlineMode = onlineMode;
+    this.onlineMode = !ApplicationSession.getInstance().isOfflineMode();
     this.onLeaveOnlineRefresh = onLeaveOnlineRefresh;
-    this.presenter = new RoomPresenter(this, roomService, onlineMode);
+    this.presenter = new RoomPresenter(this, roomService, webSocketService);
 
     setOpaque(false);
     setLayout(new MigLayout("fill, insets 16, wrap", "[grow,fill]", "[][grow,fill]"));
@@ -491,9 +496,9 @@ public class RoomPanel extends JPanel {
     return card;
   }
 
-  private static JButton iconButton(String resPath) {
+  public static JButton iconButton(String resPath) {
     var img = ImageUtil.loadImage(resPath);
-    Icon icon = new ImageIcon(img.getScaledInstance(18, 18, Image.SCALE_SMOOTH));
+    Icon icon = new ImageIcon(img.getScaledInstance(27, 18, Image.SCALE_SMOOTH));
 
     JButton button = new JButton(icon);
     applyButtonUx(button);

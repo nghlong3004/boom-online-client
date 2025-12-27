@@ -1,5 +1,7 @@
 package vn.nghlong3004.boom.online.client.controller.view.lobby;
 
+import static vn.nghlong3004.boom.online.client.controller.view.room.RoomPanel.iconButton;
+
 import com.formdev.flatlaf.FlatClientProperties;
 import com.google.gson.Gson;
 import java.awt.Cursor;
@@ -11,6 +13,7 @@ import lombok.Getter;
 import net.miginfocom.swing.MigLayout;
 import raven.modal.ModalDialog;
 import raven.modal.Toast;
+import vn.nghlong3004.boom.online.client.constant.ImageConstant;
 import vn.nghlong3004.boom.online.client.constant.RoomConstant;
 import vn.nghlong3004.boom.online.client.controller.presenter.LobbyPresenter;
 import vn.nghlong3004.boom.online.client.controller.view.CustomModalBorder;
@@ -21,6 +24,8 @@ import vn.nghlong3004.boom.online.client.model.response.RoomPageResponse;
 import vn.nghlong3004.boom.online.client.model.room.Room;
 import vn.nghlong3004.boom.online.client.model.room.RoomStatus;
 import vn.nghlong3004.boom.online.client.service.RoomService;
+import vn.nghlong3004.boom.online.client.service.WebSocketService;
+import vn.nghlong3004.boom.online.client.session.ApplicationSession;
 import vn.nghlong3004.boom.online.client.util.I18NUtil;
 import vn.nghlong3004.boom.online.client.util.ImageUtil;
 import vn.nghlong3004.boom.online.client.util.NotificationUtil;
@@ -32,9 +37,10 @@ import vn.nghlong3004.boom.online.client.util.NotificationUtil;
  * @since 12/18/2025
  */
 public class LobbyPanel extends JPanel {
-
+  private final WebSocketService webSocketService;
   private final RoomService roomService;
   private final String modalId;
+  private RoomPanel roomPanel;
 
   @Getter private final LobbyPresenter presenter;
 
@@ -44,10 +50,12 @@ public class LobbyPanel extends JPanel {
   private final JButton btnPrev;
   private final JButton btnNext;
 
-  public LobbyPanel(RoomService roomService, String modalId, Gson gson) {
+  public LobbyPanel(
+      RoomService roomService, String modalId, WebSocketService webSocketService, Gson gson) {
     this.roomService = roomService;
     this.modalId = modalId;
-    this.presenter = new LobbyPresenter(this, roomService, gson);
+    this.webSocketService = webSocketService;
+    this.presenter = new LobbyPresenter(this, roomService, webSocketService, gson);
 
     setLayout(new MigLayout("fill, insets 15, wrap", "[grow,fill]", "[][grow,fill][]"));
 
@@ -59,8 +67,8 @@ public class LobbyPanel extends JPanel {
 
     StartButton btnCreate = new StartButton(text("lobby.btn.create"), true);
     StartButton btnRefresh = new StartButton(text("lobby.btn.refresh"), false);
-    StartButton btnBack = new StartButton(text("lobby.btn.back_home"), false);
-
+    JButton btnBack = iconButton(ImageConstant.BACK);
+    btnBack.setToolTipText(text("common.back"));
     btnCreate.addActionListener(e -> presenter.onCreateRoomClicked());
     btnRefresh.addActionListener(e -> presenter.onRefreshClicked());
     btnBack.addActionListener(e -> GameContext.getInstance().previous());
@@ -70,7 +78,9 @@ public class LobbyPanel extends JPanel {
     header.add(btnRefresh);
     header.add(btnBack);
 
-    roomsContainer = new JPanel(new MigLayout("fillx, wrap, insets 0", "[grow,fill]"));
+    roomsContainer =
+        new JPanel(
+            new MigLayout("fillx, wrap, insets 0", "[grow 70,fill,min:720][grow 30,fill,min:340]"));
     roomsContainer.putClientProperty(FlatClientProperties.STYLE, "background:null;");
 
     JScrollPane scroll = new JScrollPane(roomsContainer);
@@ -81,8 +91,8 @@ public class LobbyPanel extends JPanel {
 
     lblPage = new JLabel(textFormat("lobby.pagination", 1, 1));
 
-    btnPrev = new StartButton(text("lobby.btn.prev"), false);
-    btnNext = new StartButton(text("lobby.btn.next"), false);
+    btnPrev = iconButton(ImageConstant.ARROW_LEFT);
+    btnNext = iconButton(ImageConstant.ARROW_RIGHT);
 
     btnPrev.addActionListener(e -> presenter.onPrevClicked());
     btnNext.addActionListener(e -> presenter.onNextClicked());
@@ -95,7 +105,11 @@ public class LobbyPanel extends JPanel {
     add(scroll, "grow");
     add(footer, "growx");
 
-    presenter.init();
+    if (ApplicationSession.getInstance().isOfflineMode()) {
+      btnRefresh.setEnabled(false);
+      btnNext.setEnabled(false);
+      btnPrev.setEnabled(false);
+    }
   }
 
   public void render(RoomPageResponse page) {
@@ -127,12 +141,16 @@ public class LobbyPanel extends JPanel {
   }
 
   public void openRoom(Room room) {
-    RoomPanel roomPanel = new RoomPanel(roomService, modalId, true, presenter::onRefreshClicked);
-    roomPanel.getPresenter().init(room);
+    roomPanel = new RoomPanel(roomService, modalId, presenter::onRefreshClicked, webSocketService);
+    roomPanel.getPresenter().update(room);
 
     CustomModalBorder roomBorder =
         new CustomModalBorder(roomPanel, text("room.default_name.online"), null);
     ModalDialog.pushModal(roomBorder, modalId);
+  }
+
+  public void updateRoom(Room room) {
+    roomPanel.getPresenter().update(room);
   }
 
   private JComponent createRoomItem(Room room) {

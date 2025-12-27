@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,9 +25,10 @@ import vn.nghlong3004.boom.online.client.service.HttpService;
 @RequiredArgsConstructor
 public class HttpServiceImpl implements HttpService {
   private static final String HTTP = "http";
-  private final HttpClient client;
-  private final Gson gson;
+  private final HttpClient client =
+      HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
   private final String serverUrl;
+  private final Gson gson;
 
   @Override
   public CompletableFuture<RoomPageResponse> getRooms(int page, int size, String token) {

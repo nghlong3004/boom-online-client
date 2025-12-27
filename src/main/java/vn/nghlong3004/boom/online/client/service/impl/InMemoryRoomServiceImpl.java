@@ -3,13 +3,12 @@ package vn.nghlong3004.boom.online.client.service.impl;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import vn.nghlong3004.boom.online.client.constant.RoomConstant;
 import vn.nghlong3004.boom.online.client.model.User;
 import vn.nghlong3004.boom.online.client.model.response.RoomPageResponse;
 import vn.nghlong3004.boom.online.client.model.room.*;
-import vn.nghlong3004.boom.online.client.model.room.ChatMessageType;
 import vn.nghlong3004.boom.online.client.service.RoomService;
+import vn.nghlong3004.boom.online.client.session.UserSession;
+import vn.nghlong3004.boom.online.client.util.I18NUtil;
 
 /**
  * Project: boom-online-client
@@ -21,7 +20,68 @@ import vn.nghlong3004.boom.online.client.service.RoomService;
  */
 public class InMemoryRoomServiceImpl implements RoomService {
 
-  private final Map<String, Room> rooms = new ConcurrentHashMap<>();
+  private Room currentRoom;
+
+  @Override
+  public CompletableFuture<Room> createRoom(User owner, String roomName) {
+    Room newRoom =
+        Room.builder()
+            .id(UUID.randomUUID().toString())
+            .name(I18NUtil.getString("room.base_name").formatted(owner.getDisplayName()))
+            .ownerId(owner.getId())
+            .ownerDisplayName(owner.getDisplayName())
+            .mapIndex(0)
+            .status(RoomStatus.WAITING)
+            .maxPlayers(4)
+            .created(Instant.now())
+            .slots(new ArrayList<>(4))
+            .chat(new ArrayList<>())
+            .build();
+    for (int i = 0; i < newRoom.getMaxPlayers(); ++i) {
+      PlayerSlot slot = createBot();
+      if (i == 0) {
+        slot =
+            PlayerSlot.builder()
+                .index(0)
+                .occupied(true)
+                .bot(false)
+                .userId(owner.getId())
+                .displayName(owner.getDisplayName())
+                .host(true)
+                .ready(true)
+                .characterIndex(0)
+                .build();
+      }
+      newRoom.getSlots().add(slot);
+    }
+    currentRoom = newRoom;
+    return CompletableFuture.completedFuture(newRoom);
+  }
+
+  @Override
+  public CompletableFuture<Room> toggleReady() {
+    long myId = UserSession.getInstance().getCurrentUser().getId();
+
+    currentRoom.getSlots().stream()
+        .filter(s -> s.isOccupied() && Objects.equals(s.getUserId(), myId))
+        .findFirst()
+        .ifPresent(slot -> slot.setReady(!slot.isReady()));
+
+    return CompletableFuture.completedFuture(currentRoom);
+  }
+
+  @Override
+  public CompletableFuture<Room> startGame() {
+    boolean allReady =
+        currentRoom.getSlots().stream()
+            .filter(s -> s.isOccupied() && !s.isHost())
+            .allMatch(PlayerSlot::isReady);
+    if (allReady) {
+      System.out.println("Game Offline Starting...");
+    }
+
+    return CompletableFuture.completedFuture(currentRoom);
+  }
 
   @Override
   public CompletableFuture<RoomPageResponse> rooms(int pageIndex, int pageSize) {
@@ -29,8 +89,55 @@ public class InMemoryRoomServiceImpl implements RoomService {
   }
 
   @Override
-  public CompletableFuture<Room> createRoom(User owner, String roomName) {
+  public CompletableFuture<Room> joinRoom(String roomId, User user) {
     return null;
+  }
+
+  @Override
+  public CompletableFuture<Room> changeMap(int mapIndex) {
+    if (!Objects.equals(
+        currentRoom.getOwnerId(), UserSession.getInstance().getCurrentUser().getId())) {
+      return CompletableFuture.completedFuture(currentRoom);
+    }
+
+    currentRoom.setMapIndex(mapIndex);
+    currentRoom.getChat().add(createSystemChat(I18NUtil.getString("room.change_map")));
+
+    return CompletableFuture.completedFuture(currentRoom);
+  }
+
+  @Override
+  public CompletableFuture<Room> changeCharacter(int characterIndex) {
+    long myId = UserSession.getInstance().getCurrentUser().getId();
+    currentRoom.getSlots().stream()
+        .filter(s -> s.isOccupied() && Objects.equals(s.getUserId(), myId))
+        .findFirst()
+        .ifPresent(s -> s.setCharacterIndex(characterIndex));
+
+    return CompletableFuture.completedFuture(currentRoom);
+  }
+
+  @Override
+  public CompletableFuture<Room> sendChat(String content) {
+    User user = UserSession.getInstance().getCurrentUser();
+    currentRoom
+        .getChat()
+        .add(
+            ChatMessage.builder()
+                .type(ChatMessageType.USER)
+                .senderDisplayName(user.getDisplayName())
+                .content(content)
+                .created(Instant.now())
+                .build());
+    return CompletableFuture.completedFuture(currentRoom);
+  }
+
+  private ChatMessage createSystemChat(String content) {
+    return ChatMessage.builder()
+        .type(ChatMessageType.SYSTEM)
+        .content(content)
+        .created(Instant.now())
+        .build();
   }
 
   private PlayerSlot createBot() {
@@ -44,148 +151,5 @@ public class InMemoryRoomServiceImpl implements RoomService {
         .ready(true)
         .characterIndex(1)
         .build();
-  }
-
-  @Override
-  public CompletableFuture<Room> joinRoom(String roomId, User user) {
-    return null;
-  }
-
-  @Override
-  public Room leaveRoom(String roomId, User user) {
-    // Offline: close room.
-    rooms.remove(roomId);
-    return null;
-  }
-
-  @Override
-  public Room toggleReady(String roomId, User user) {
-    // Offline: host is always ready.
-    return getRoom(roomId);
-  }
-
-  @Override
-  public Room changeMap(String roomId, User requester, int mapIndex) {
-    Room room = requireRoom(roomId);
-    if (!Objects.equals(room.getOwnerId(), requester.getId())) {
-      return room;
-    }
-    Room updated =
-        Room.builder()
-            .id(room.getId())
-            .name(room.getName())
-            .ownerId(room.getOwnerId())
-            .ownerDisplayName(room.getOwnerDisplayName())
-            .mapIndex(normalizeMapIndex(mapIndex))
-            .status(room.getStatus())
-            .slots(room.getSlots())
-            .chat(room.getChat())
-            .build();
-    rooms.put(roomId, updated);
-    updated
-        .getChat()
-        .add(
-            ChatMessage.builder()
-                .id(UUID.randomUUID().toString())
-                .type(ChatMessageType.SYSTEM)
-                .content("Chủ phòng đã đổi map")
-                .created(Instant.now())
-                .build());
-    return updated;
-  }
-
-  @Override
-  public Room changeCharacter(String roomId, User user, int characterIndex) {
-    Room room = requireRoom(roomId);
-    List<PlayerSlot> updatedSlots = new ArrayList<>(room.getSlots().size());
-
-    for (PlayerSlot slot : room.getSlots()) {
-      if (slot != null && slot.isOccupied() && Objects.equals(slot.getUserId(), user.getId())) {
-        updatedSlots.add(
-            PlayerSlot.builder()
-                .index(slot.getIndex())
-                .occupied(true)
-                .bot(slot.isBot())
-                .userId(slot.getUserId())
-                .displayName(slot.getDisplayName())
-                .host(slot.isHost())
-                .ready(slot.isReady())
-                .characterIndex(normalizeCharacterIndex(characterIndex))
-                .build());
-      } else {
-        updatedSlots.add(slot);
-      }
-    }
-
-    Room updated =
-        Room.builder()
-            .id(room.getId())
-            .name(room.getName())
-            .ownerId(room.getOwnerId())
-            .ownerDisplayName(room.getOwnerDisplayName())
-            .mapIndex(room.getMapIndex())
-            .status(room.getStatus())
-            .slots(updatedSlots)
-            .chat(room.getChat())
-            .build();
-
-    rooms.put(roomId, updated);
-    return updated;
-  }
-
-  @Override
-  public void sendChat(String roomId, User user, String content) {
-    Room room = requireRoom(roomId);
-
-    ChatMessage msg =
-        ChatMessage.builder()
-            .id(UUID.randomUUID().toString())
-            .type(ChatMessageType.USER)
-            .senderId(user != null ? user.getId() : null)
-            .senderDisplayName(user != null ? user.getDisplayName() : null)
-            .content(content.trim())
-            .created(Instant.now())
-            .build();
-
-    room.getChat().add(msg);
-  }
-
-  @Override
-  public Room getRoom(String roomId) {
-    if (roomId == null) return null;
-    return rooms.get(roomId);
-  }
-
-  private Room requireRoom(String roomId) {
-    Room room = getRoom(roomId);
-    if (room == null) {
-      throw new IllegalArgumentException("Room not found: " + roomId);
-    }
-    return room;
-  }
-
-  private RoomPageResponse page(List<Room> rooms, int pageIndex, int pageSize) {
-    int total = rooms.size();
-    int start = Math.max(0, pageIndex * pageSize);
-    int end = Math.min(total, start + pageSize);
-    List<Room> sub = (start >= end) ? List.of() : rooms.subList(start, end);
-    return RoomPageResponse.builder()
-        .rooms(new ArrayList<>(sub))
-        .pageIndex(pageIndex)
-        .pageSize(pageSize)
-        .totalRooms(total)
-        .build();
-  }
-
-  private int normalizeMapIndex(int idx) {
-    int n = RoomConstant.MAP_AVATARS.length;
-    if (n == 0) return 0;
-    return Math.floorMod(idx, n);
-  }
-
-  private int normalizeCharacterIndex(int idx) {
-    int n = RoomConstant.PLAYER_AVATARS.length;
-    if (n == 0) return 0;
-    return Math.floorMod(idx, n);
   }
 }

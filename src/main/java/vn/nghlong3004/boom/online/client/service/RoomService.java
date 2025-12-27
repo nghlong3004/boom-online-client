@@ -14,22 +14,21 @@ import vn.nghlong3004.boom.online.client.model.room.Room;
  * @since 12/18/2025
  */
 public interface RoomService {
+  CompletableFuture<Room> createRoom(User owner, String roomName);
 
   CompletableFuture<RoomPageResponse> rooms(int pageIndex, int pageSize);
 
-  CompletableFuture<Room> createRoom(User owner, String roomName);
-
   CompletableFuture<Room> joinRoom(String roomId, User user);
 
-  Room leaveRoom(String roomId, User user);
+  CompletableFuture<Room> changeMap(int mapIndex);
 
-  Room toggleReady(String roomId, User user);
+  CompletableFuture<Room> changeCharacter(int characterIndex);
 
-  Room changeMap(String roomId, User requester, int mapIndex);
+  CompletableFuture<Room> sendChat(String content);
 
-  Room changeCharacter(String roomId, User user, int characterIndex);
+  CompletableFuture<Room> toggleReady();
 
-  void sendChat(String roomId, User user, String content);
+  CompletableFuture<Room> startGame();
 
-  Room getRoom(String roomId);
+  default void setCurrentRoom(Room room) {}
 }

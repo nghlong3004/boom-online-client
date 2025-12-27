@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Project: boom-online-client
@@ -12,19 +13,20 @@ import lombok.Getter;
  * @since 12/18/2025
  */
 @Getter
+@Setter
 @Builder
 public class Room {
-  private final String id;
-  private final String name;
+  private String id;
+  private String name;
 
-  private final Long ownerId;
-  private final String ownerDisplayName;
+  private Long ownerId;
+  private String ownerDisplayName;
 
-  private final int mapIndex;
-  private final RoomStatus status;
+  private int mapIndex;
+  private RoomStatus status;
 
-  private final List<PlayerSlot> slots;
-  private final List<ChatMessage> chat;
+  private List<PlayerSlot> slots;
+  private List<ChatMessage> chat;
 
   @Builder.Default private Instant created = Instant.now();
 

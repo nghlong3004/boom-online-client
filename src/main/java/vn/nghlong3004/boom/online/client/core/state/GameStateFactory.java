@@ -44,10 +44,14 @@ public final class GameStateFactory {
   }
 
   private static GameState createStartState(GamePanel gamePanel) {
+    int x = (GAME_WIDTH - BUTTON_WIDTH) / 2;
+    int y = (GAME_HEIGHT - BUTTON_HEIGHT) / 4;
+    TextButton textButton = new TextButton(x, y, I18NUtil.getString("lobby.btn.back_lobby"));
     BufferedImage background = ImageUtil.loadImage(ImageConstant.SETTING_BACKGROUND);
     return StartState.builder()
         .background(background)
         .gamePanel(gamePanel)
+        .textButton(textButton)
         .option(createOption())
         .build();
   }

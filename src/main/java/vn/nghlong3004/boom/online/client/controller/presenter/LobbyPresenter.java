@@ -8,7 +8,10 @@ import lombok.extern.slf4j.Slf4j;
 import vn.nghlong3004.boom.online.client.controller.view.lobby.LobbyPanel;
 import vn.nghlong3004.boom.online.client.model.User;
 import vn.nghlong3004.boom.online.client.model.response.ErrorResponse;
+import vn.nghlong3004.boom.online.client.model.room.Room;
 import vn.nghlong3004.boom.online.client.service.RoomService;
+import vn.nghlong3004.boom.online.client.service.WebSocketService;
+import vn.nghlong3004.boom.online.client.session.ApplicationSession;
 import vn.nghlong3004.boom.online.client.session.UserSession;
 import vn.nghlong3004.boom.online.client.util.I18NUtil;
 
@@ -26,6 +29,7 @@ public class LobbyPresenter {
 
   private final LobbyPanel view;
   private final RoomService roomService;
+  private final WebSocketService webSocketService;
   private final Gson gson;
 
   private int pageIndex;
@@ -51,51 +55,59 @@ public class LobbyPresenter {
   public void onCreateRoomClicked() {
     User currentUser = UserSession.getInstance().getCurrentUser();
     if (currentUser == null) return;
+
     view.showInfo("common.processing");
     String defaultName =
         I18NUtil.getString("room.base_name").formatted(currentUser.getDisplayName());
 
     roomService
         .createRoom(currentUser, defaultName)
-        .thenAccept(
-            newRoom -> {
-              SwingUtilities.invokeLater(
-                  () -> {
-                    view.showSuccess("room.create.success");
-                    view.openRoom(newRoom);
-                  });
-            })
-        .exceptionally(
-            ex -> {
-              SwingUtilities.invokeLater(
-                  () -> {
-                    log.error("Error create room: ", ex);
-                    String msg =
-                        ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
-                    view.showRawError(msg);
-                  });
-              return null;
-            });
+        .thenAccept(this::handleCreateRoom)
+        .exceptionally(this::handleException);
   }
 
   public void onRoomSelected(String roomId) {
     User currentUser = UserSession.getInstance().getCurrentUser();
     if (currentUser == null) return;
+
+    view.showInfo("common.processing");
+
     roomService
         .joinRoom(roomId, currentUser)
-        .thenAccept(
-            room -> {
-              SwingUtilities.invokeLater(
-                  () -> {
-                    view.showSuccess("room.join.success");
-                    view.openRoom(room);
-                  });
-            })
-        .exceptionally(
-            ex -> {
-              handleError(ex);
-              return null;
-            });
+        .thenAccept(this::handleJoinRoom)
+        .exceptionally(this::handleException);
+  }
+
+  private void handleCreateRoom(Room room) {
+    view.showSuccess("room.create.success");
+    view.openRoom(room);
+    if (ApplicationSession.getInstance().isOfflineMode()) {
+      return;
+    }
+    handleRoomConnection(room);
+  }
+
+  private void handleJoinRoom(Room room) {
+    view.showSuccess("room.join.success");
+    view.openRoom(room);
+    if (ApplicationSession.getInstance().isOfflineMode()) {
+      return;
+    }
+    handleRoomConnection(room);
+  }
+
+  private void handleRoomConnection(Room room) {
+    String token = UserSession.getInstance().getAccessToken();
+    try {
+      webSocketService.connectAndSubscribe(
+          token,
+          room.getId(),
+          updatedRoom -> SwingUtilities.invokeLater(() -> view.updateRoom(updatedRoom)));
+
+    } catch (Exception e) {
+      log.error("Failed to establish WebSocket connection", e);
+      SwingUtilities.invokeLater(() -> view.showRawError("WebSocket Error: " + e.getMessage()));
+    }
   }
 
   private void loadPage(int targetPage) {
@@ -125,24 +137,20 @@ public class LobbyPresenter {
             });
   }
 
-  private void handleError(Throwable ex) {
+  private Void handleException(Throwable ex) {
     SwingUtilities.invokeLater(
         () -> {
-          log.error("Action failed: ", ex);
+          log.error("Action failed", ex);
           Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
-          String errorBody = cause.getMessage();
-
-          // Map từ JSON Error -> Key I18N
-          String messageKey = mapErrorToMessageKey(errorBody);
+          String messageKey = mapErrorToMessageKey(cause.getMessage());
 
           if (messageKey.startsWith("Raw:")) {
-            // Nếu không map được key, hiển thị raw message (bỏ tiền tố "Raw:")
             view.showRawError(messageKey.substring(4));
           } else {
-            // Nếu map được key, hiển thị theo ngôn ngữ
             view.showError(messageKey);
           }
         });
+    return null;
   }
 
   private String mapErrorToMessageKey(String errorBody) {
