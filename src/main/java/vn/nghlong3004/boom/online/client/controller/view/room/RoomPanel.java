@@ -7,13 +7,11 @@ import java.awt.event.ActionListener;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import javax.swing.*;
 import lombok.Getter;
 import net.miginfocom.swing.MigLayout;
 import raven.modal.ModalDialog;
-import raven.modal.Toast;
 import vn.nghlong3004.boom.online.client.constant.ImageConstant;
 import vn.nghlong3004.boom.online.client.constant.RoomConstant;
 import vn.nghlong3004.boom.online.client.controller.presenter.RoomPresenter;
@@ -29,7 +27,6 @@ import vn.nghlong3004.boom.online.client.session.ApplicationSession;
 import vn.nghlong3004.boom.online.client.session.UserSession;
 import vn.nghlong3004.boom.online.client.util.I18NUtil;
 import vn.nghlong3004.boom.online.client.util.ImageUtil;
-import vn.nghlong3004.boom.online.client.util.NotificationUtil;
 
 /**
  * Project: boom-online-client
@@ -47,7 +44,6 @@ public class RoomPanel extends JPanel {
 
   private JLabel lblRoomTitle;
   private JLabel lblRoomMeta;
-
   private final PlayerSlotPanel[] slotPanels;
 
   private final JLabel lblMapPreview;
@@ -73,6 +69,7 @@ public class RoomPanel extends JPanel {
   private int lastCharacterIndex = Integer.MIN_VALUE;
 
   private boolean forceScrollNextRender = false;
+  private Room lastRenderedRoom;
 
   public RoomPanel(
       RoomService roomService,
@@ -164,12 +161,6 @@ public class RoomPanel extends JPanel {
     characterCard.add(lblCharacterName, "growx");
 
     btnAction = new StartButton(text("room.btn.ready"), true);
-    btnAction.putClientProperty(
-        FlatClientProperties.STYLE,
-        "margin:14,20,14,20; arc:18; font:bold +2;"
-            + "background:$Component.accentColor;"
-            + "hoverBackground:fade($Component.accentColor,85%);"
-            + "pressedBackground:fade($Component.accentColor,70%);");
     applyButtonUx(btnAction);
 
     right.add(mapCard, "growx, h 40%");
@@ -178,20 +169,14 @@ public class RoomPanel extends JPanel {
 
     body.add(left, "grow, push");
     body.add(right, "grow, push");
-
     add(body, "grow, push");
 
     btnAction.addActionListener(
         e -> {
-          if (isMeHost(lastRenderedRoom)) {
-            presenter.onStartClicked();
-          } else {
-            presenter.onToggleReadyClicked();
-          }
+          if (isMeHost(lastRenderedRoom)) presenter.onStartClicked();
+          else presenter.onToggleReadyClicked();
         });
   }
-
-  private Room lastRenderedRoom;
 
   public void renderRoom(Room room) {
     lastRenderedRoom = room;
@@ -199,9 +184,8 @@ public class RoomPanel extends JPanel {
         () -> {
           if (room == null) return;
 
-          String fallbackName =
-              onlineMode ? text("room.default_name.online") : text("room.default_name.offline");
-          lblRoomTitle.setText(room.getName() != null ? room.getName() : fallbackName);
+          lblRoomTitle.setText(
+              room.getName() != null ? room.getName() : text("room.default_name.online"));
           lblRoomMeta.setText(
               textFormat(
                   "room.meta.format",
@@ -215,77 +199,67 @@ public class RoomPanel extends JPanel {
                   ? UserSession.getInstance().getCurrentUser().getId()
                   : null;
 
-          List<PlayerSlot> slots = room.getSlots();
           for (int i = 0; i < slotPanels.length; i++) {
-            PlayerSlot slot = (slots != null && i < slots.size()) ? slots.get(i) : null;
+            PlayerSlot slot =
+                (room.getSlots() != null && i < room.getSlots().size())
+                    ? room.getSlots().get(i)
+                    : null;
             slotPanels[i].setSlot(slot, myId);
           }
 
           int mapIdx = Math.floorMod(room.getMapIndex(), RoomConstant.MAP_AVATARS.length);
-          if (mapIdx != lastMapIndex) {
-            lblMapPreview.setIcon(getMapPreviewIcon(mapIdx));
-            lastMapIndex = mapIdx;
-          }
+          lblMapPreview.setIcon(getMapPreviewIcon(mapIdx));
           lblMapName.setText(safeName(RoomConstant.MAP_AVATARS[mapIdx]));
 
-          boolean canChangeMap =
+          boolean isHost =
               myId != null && room.getOwnerId() != null && myId.equals(room.getOwnerId());
-          btnMapLeft.setEnabled(canChangeMap);
-          btnMapRight.setEnabled(canChangeMap);
+          btnMapLeft.setEnabled(isHost);
+          btnMapRight.setEnabled(isHost);
 
           int myChar = getMyCharacterIndex(room, myId);
           int charIdx = Math.floorMod(myChar, RoomConstant.PLAYER_AVATARS.length);
-          if (charIdx != lastCharacterIndex) {
-            lblCharacterPreview.setIcon(getCharacterPreviewIcon(charIdx));
-            lastCharacterIndex = charIdx;
-          }
+          lblCharacterPreview.setIcon(getCharacterPreviewIcon(charIdx));
           lblCharacterName.setText(safeName(RoomConstant.PLAYER_AVATARS[charIdx]));
 
           btnCharLeft.setEnabled(myId != null);
           btnCharRight.setEnabled(myId != null);
 
-          if (canChangeMap) {
-            btnAction.setText(text("room.btn.start"));
-          } else {
-            boolean ready = isMeReady(room, myId);
-            btnAction.setText(ready ? text("room.btn.unready") : text("room.btn.ready"));
-          }
+          if (isHost) btnAction.setText(text("room.btn.start"));
+          else
+            btnAction.setText(
+                isMeReady(room, myId) ? text("room.btn.unready") : text("room.btn.ready"));
 
           if (chatModel != null) {
-            boolean shouldAutoScroll = forceScrollNextRender || isChatNearBottom(48);
             chatModel.clear();
-            if (room.getChat() != null) {
-              for (ChatMessage m : room.getChat()) {
-                chatModel.addElement(m);
-              }
-            }
-            if (shouldAutoScroll) {
-              scrollChatToBottom();
-            }
+            if (room.getChat() != null) room.getChat().forEach(chatModel::addElement);
+            if (forceScrollNextRender || isChatNearBottom(48)) scrollChatToBottom();
             forceScrollNextRender = false;
           }
         });
   }
 
-  private boolean isChatNearBottom(int thresholdPx) {
-    if (chatScroll == null) return true;
-    JScrollBar bar = chatScroll.getVerticalScrollBar();
-    if (bar == null) return true;
-
-    int value = bar.getValue();
-    int extent = bar.getModel().getExtent();
-    int max = bar.getMaximum();
-    return value + extent >= max - thresholdPx;
+  public void setControlsEnabled(boolean enabled) {
+    btnMapLeft.setEnabled(enabled && isMeHost(lastRenderedRoom));
+    btnMapRight.setEnabled(enabled && isMeHost(lastRenderedRoom));
+    btnCharRight.setEnabled(enabled);
+    btnCharLeft.setEnabled(enabled);
+    txtChat.setEnabled(enabled);
+    btnAction.setEnabled(enabled);
+    this.setCursor(
+        enabled ? Cursor.getDefaultCursor() : Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
   }
 
   public int getMyCharacterIndex(Room room, Long myId) {
     if (room == null || myId == null || room.getSlots() == null) return 0;
-    for (PlayerSlot slot : room.getSlots()) {
-      if (slot != null && slot.isOccupied() && myId.equals(slot.getUserId())) {
-        return slot.getCharacterIndex();
-      }
-    }
-    return 0;
+    return room.getSlots().stream()
+        .filter(s -> s != null && s.isOccupied() && myId.equals(s.getUserId()))
+        .map(PlayerSlot::getCharacterIndex)
+        .findFirst()
+        .orElse(0);
+  }
+
+  public void backToLobby() {
+    SwingUtilities.invokeLater(() -> ModalDialog.popModel(modalId));
   }
 
   public void backToHome() {
@@ -296,49 +270,22 @@ public class RoomPanel extends JPanel {
         });
   }
 
-  public void backToLobby() {
-    SwingUtilities.invokeLater(
-        () -> {
-          ModalDialog.popModel(modalId);
-          if (onLeaveOnlineRefresh != null) {
-            onLeaveOnlineRefresh.run();
-          }
-        });
-  }
-
-  public void showInfoUpcoming() {
-    SwingUtilities.invokeLater(
-        () ->
-            NotificationUtil.getInstance()
-                .show(this, Toast.Type.INFO, text("common.feature.upcoming")));
-  }
-
   private JPanel buildHeader() {
     JPanel header = new JPanel(new MigLayout("fillx, insets 0", "[grow,fill][right]", "[]"));
     header.putClientProperty(FlatClientProperties.STYLE, "background:null;");
-
     JPanel left = new JPanel(new MigLayout("insets 0, wrap", "[grow,fill]", "[][]"));
     left.putClientProperty(FlatClientProperties.STYLE, "background:null;");
-
-    lblRoomTitle =
-        new JLabel(
-            onlineMode ? text("room.default_name.online") : text("room.default_name.offline"));
+    lblRoomTitle = new JLabel(" ");
     lblRoomTitle.putClientProperty(FlatClientProperties.STYLE, "font:bold +4;");
-
     lblRoomMeta = new JLabel(" ");
     lblRoomMeta.putClientProperty(
         FlatClientProperties.STYLE, "foreground:$Label.disabledForeground;");
-
     left.add(lblRoomTitle);
     left.add(lblRoomMeta);
-
     JButton btnBack = iconButton(ImageConstant.BACK);
-    btnBack.setToolTipText(text("common.back"));
     btnBack.addActionListener(e -> presenter.onBackClicked());
-
     header.add(left);
     header.add(btnBack, "w 44!, h 44!");
-
     return header;
   }
 
@@ -346,38 +293,22 @@ public class RoomPanel extends JPanel {
     JPanel card =
         glassCard(
             text("room.chat.title"), "fill, insets 14, wrap", "[grow,fill]", "[][grow,fill][]");
-
     chatModel = new DefaultListModel<>();
     chatList = new JList<>(chatModel);
     chatList.setFocusable(false);
-    // Target at least 7-8 lines visible without scrolling.
     chatList.setVisibleRowCount(8);
-    chatList.setFixedCellHeight(-1);
     chatList.putClientProperty(FlatClientProperties.STYLE, "background:null;");
-
     chatScroll = new JScrollPane(chatList);
     chatScroll.setBorder(BorderFactory.createEmptyBorder());
-    chatScroll.getViewport().setOpaque(false);
     chatScroll.setOpaque(false);
-    chatScroll.putClientProperty(FlatClientProperties.STYLE, "background:null;");
-
+    chatScroll.getViewport().setOpaque(false);
     JPanel input = new JPanel(new MigLayout("fillx, insets 0", "[grow,fill][]", "[]"));
     input.putClientProperty(FlatClientProperties.STYLE, "background:null;");
-
     txtChat = new JTextField();
-    txtChat.putClientProperty(FlatClientProperties.STYLE, "arc:14; margin:8,10,8,10;");
     txtChat.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, text("room.chat.placeholder"));
-
     JButton btnSend = new JButton(text("room.chat.send"));
-    btnSend.putClientProperty(
-        FlatClientProperties.STYLE,
-        "arc:14; margin:8,14,8,14; font:bold;"
-            + "background:fade($Panel.background,35%);"
-            + "hoverBackground:fade($Panel.background,60%);"
-            + "pressedBackground:fade($Panel.background,75%);");
     applyButtonUx(btnSend);
-
-    ActionListener send =
+    ActionListener sendAction =
         e -> {
           String content = txtChat.getText();
           if (content == null || content.trim().isEmpty()) return;
@@ -385,35 +316,25 @@ public class RoomPanel extends JPanel {
           presenter.onSendChat(content.trim());
           txtChat.setText("");
         };
-    btnSend.addActionListener(send);
-    txtChat.addActionListener(send);
-
+    btnSend.addActionListener(sendAction);
+    txtChat.addActionListener(sendAction);
     installChatListRenderer();
-
     input.add(txtChat);
     input.add(btnSend, "w 76!");
-
-    // Let the scroll pane fully occupy the remaining space.
     card.add(chatScroll, "grow, push");
     card.add(input, "growx");
-
     return card;
   }
 
   private void scrollChatToBottom() {
-    if (chatList == null || chatModel == null) return;
+    if (chatModel.isEmpty()) return;
+    chatList.ensureIndexIsVisible(chatModel.getSize() - 1);
+  }
 
-    int lastIndex = chatModel.getSize() - 1;
-    if (lastIndex < 0) return;
-
-    // Ensure the newest item is visible.
-    chatList.ensureIndexIsVisible(lastIndex);
-    if (chatScroll != null) {
-      JScrollBar bar = chatScroll.getVerticalScrollBar();
-      if (bar != null) {
-        bar.setValue(bar.getMaximum());
-      }
-    }
+  private boolean isChatNearBottom(int thresholdPx) {
+    if (chatScroll == null) return true;
+    JScrollBar bar = chatScroll.getVerticalScrollBar();
+    return bar.getValue() + bar.getModel().getExtent() >= bar.getMaximum() - thresholdPx;
   }
 
   private Icon getMapPreviewIcon(int mapIdx) {
@@ -427,55 +348,42 @@ public class RoomPanel extends JPanel {
   }
 
   private static Icon scaledIcon(String resourcePath, int w, int h) {
-    var img = ImageUtil.loadImage(resourcePath);
-    return new ImageIcon(img.getScaledInstance(w, h, Image.SCALE_SMOOTH));
+    return new ImageIcon(
+        ImageUtil.loadImage(resourcePath).getScaledInstance(w, h, Image.SCALE_SMOOTH));
   }
 
   private void installChatListRenderer() {
     chatList.setCellRenderer(
         (list, value, index, isSelected, cellHasFocus) -> {
           JLabel lbl = new JLabel();
-          lbl.setOpaque(false);
           lbl.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
-
-          if (value == null) {
-            lbl.setText(" ");
-            return lbl;
-          }
-
+          if (value == null) return lbl;
           if (value.getType() == ChatMessageType.SYSTEM) {
             lbl.putClientProperty(
                 FlatClientProperties.STYLE, "foreground:$Label.disabledForeground;");
             lbl.setHorizontalAlignment(SwingConstants.CENTER);
             lbl.setText(escape(value.getContent()));
-            return lbl;
+          } else {
+            Long myId =
+                UserSession.getInstance().getCurrentUser() != null
+                    ? UserSession.getInstance().getCurrentUser().getId()
+                    : null;
+            boolean isMe = myId != null && myId.equals(value.getSenderId());
+            String color = isMe ? "$Component.accentColor" : "$Label.foreground";
+            lbl.putClientProperty(FlatClientProperties.STYLE, "foreground:" + color + ";");
+            String time =
+                value.getCreated() != null
+                    ? TIME_FMT.format(value.getCreated().atZone(ZoneId.systemDefault()))
+                    : "";
+            lbl.setText(
+                "<html><b>"
+                    + escape(value.getSenderDisplayName())
+                    + "</b> <small>"
+                    + time
+                    + "</small><br/>"
+                    + escape(value.getContent())
+                    + "</html>");
           }
-
-          Long myId =
-              UserSession.getInstance().getCurrentUser() != null
-                  ? UserSession.getInstance().getCurrentUser().getId()
-                  : null;
-          boolean isMe = myId != null && myId.equals(value.getSenderId());
-
-          lbl.setHorizontalAlignment(SwingConstants.LEFT);
-          String time =
-              value.getCreated() != null
-                  ? TIME_FMT.format(value.getCreated().atZone(ZoneId.systemDefault()))
-                  : "";
-          String name = value.getSenderDisplayName() != null ? value.getSenderDisplayName() : "";
-          String content = value.getContent() != null ? value.getContent() : "";
-
-          String color = isMe ? "$Component.accentColor" : "$Label.foreground";
-          lbl.putClientProperty(FlatClientProperties.STYLE, "foreground:" + color + ";");
-          lbl.setText(
-              "<html><b>"
-                  + escape(name)
-                  + "</b> <span style='opacity:0.65'>"
-                  + escape(time)
-                  + "</span><br/>"
-                  + escape(content)
-                  + "</html>");
-
           return lbl;
         });
   }
@@ -488,25 +396,21 @@ public class RoomPanel extends JPanel {
     card.putClientProperty(
         FlatClientProperties.STYLE,
         "arc:20; border:1,1,1,1,fade($Component.borderColor,70%),,20; background:fade($Panel.background,55%);");
-
     JLabel t = new JLabel(title);
     t.putClientProperty(FlatClientProperties.STYLE, "font:bold +1;");
     card.add(t, "growx");
-
     return card;
   }
 
   public static JButton iconButton(String resPath) {
-    var img = ImageUtil.loadImage(resPath);
-    Icon icon = new ImageIcon(img.getScaledInstance(27, 18, Image.SCALE_SMOOTH));
-
+    Icon icon =
+        new ImageIcon(ImageUtil.loadImage(resPath).getScaledInstance(27, 18, Image.SCALE_SMOOTH));
     JButton button = new JButton(icon);
     applyButtonUx(button);
     return button;
   }
 
   private static void applyButtonUx(AbstractButton b) {
-    if (b == null) return;
     b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
   }
 
@@ -516,31 +420,29 @@ public class RoomPanel extends JPanel {
         UserSession.getInstance().getCurrentUser() != null
             ? UserSession.getInstance().getCurrentUser().getId()
             : null;
-    return myId != null && room.getOwnerId() != null && myId.equals(room.getOwnerId());
+    return myId != null && myId.equals(room.getOwnerId());
   }
 
   private boolean isMeReady(Room room, Long myId) {
-    if (room == null || myId == null || room.getSlots() == null) return false;
-    for (PlayerSlot slot : room.getSlots()) {
-      if (slot != null && slot.isOccupied() && myId.equals(slot.getUserId())) {
-        return slot.isHost() || slot.isReady();
-      }
-    }
-    return false;
+    if (room == null || myId == null) return false;
+    return room.getSlots().stream()
+        .anyMatch(
+            s ->
+                s != null
+                    && s.isOccupied()
+                    && myId.equals(s.getUserId())
+                    && (s.isHost() || s.isReady()));
   }
 
   private static String safeName(String path) {
     if (path == null) return "";
-    int slash = path.lastIndexOf('/');
-    String file = slash >= 0 ? path.substring(slash + 1) : path;
-    int dot = file.lastIndexOf('.');
-    if (dot > 0) file = file.substring(0, dot);
+    String file = path.substring(path.lastIndexOf('/') + 1);
+    if (file.contains(".")) file = file.substring(0, file.lastIndexOf('.'));
     return file.replace("_avatar", "").replace('_', ' ');
   }
 
   private static String escape(String s) {
-    if (s == null) return "";
-    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    return s == null ? "" : s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
   }
 
   private static String text(String key) {

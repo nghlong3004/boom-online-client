@@ -33,12 +33,24 @@ public class LobbyPresenter {
   private final Gson gson;
 
   private int pageIndex;
+  private boolean isProcessing = false;
 
   public void init() {
     loadPage(0);
   }
 
+  private void startProcessing() {
+    this.isProcessing = true;
+    view.setControlsEnabled(false);
+  }
+
+  private void endProcessing() {
+    this.isProcessing = false;
+    view.setControlsEnabled(true);
+  }
+
   public void onRefreshClicked() {
+    if (isProcessing) return;
     view.showInfo("common.loading");
     loadPage(pageIndex);
   }
@@ -53,29 +65,86 @@ public class LobbyPresenter {
   }
 
   public void onCreateRoomClicked() {
+    if (isProcessing) return;
+
     User currentUser = UserSession.getInstance().getCurrentUser();
     if (currentUser == null) return;
 
+    startProcessing();
     view.showInfo("common.processing");
+
     String defaultName =
         I18NUtil.getString("room.base_name").formatted(currentUser.getDisplayName());
 
     roomService
         .createRoom(currentUser, defaultName)
-        .thenAccept(this::handleCreateRoom)
-        .exceptionally(this::handleException);
+        .thenAccept(
+            room -> {
+              handleCreateRoom(room);
+              endProcessing();
+            })
+        .exceptionally(
+            ex -> {
+              handleException(ex);
+              endProcessing();
+              return null;
+            });
   }
 
   public void onRoomSelected(String roomId) {
+    if (isProcessing) return;
+
     User currentUser = UserSession.getInstance().getCurrentUser();
     if (currentUser == null) return;
 
+    startProcessing();
     view.showInfo("common.processing");
 
     roomService
         .joinRoom(roomId, currentUser)
-        .thenAccept(this::handleJoinRoom)
-        .exceptionally(this::handleException);
+        .thenAccept(
+            room -> {
+              handleJoinRoom(room);
+              endProcessing();
+            })
+        .exceptionally(
+            ex -> {
+              handleException(ex);
+              endProcessing();
+              return null;
+            });
+  }
+
+  private void loadPage(int targetPage) {
+    if (isProcessing) return;
+    if (targetPage < 0) targetPage = 0;
+
+    startProcessing();
+    final int finalPage = targetPage;
+
+    roomService
+        .rooms(finalPage, PAGE_SIZE)
+        .thenAccept(
+            pageResponse -> {
+              SwingUtilities.invokeLater(
+                  () -> {
+                    int totalPages = Math.max(1, pageResponse.getTotalPages());
+                    if (finalPage >= totalPages) {
+                      isProcessing = false;
+                      loadPage(totalPages - 1);
+                    } else {
+                      this.pageIndex = pageResponse.getPageIndex();
+                      view.render(pageResponse);
+                      endProcessing();
+                    }
+                  });
+            })
+        .exceptionally(
+            ex -> {
+              log.error("Error loading rooms", ex);
+              endProcessing();
+              return null;
+            });
   }
 
   private void handleCreateRoom(Room room) {
@@ -110,34 +179,7 @@ public class LobbyPresenter {
     }
   }
 
-  private void loadPage(int targetPage) {
-    if (targetPage < 0) targetPage = 0;
-    final int finalPage = targetPage;
-
-    roomService
-        .rooms(finalPage, PAGE_SIZE)
-        .thenAccept(
-            pageResponse -> {
-              SwingUtilities.invokeLater(
-                  () -> {
-                    int totalPages = pageResponse.getTotalPages();
-                    if (totalPages > 0 && finalPage >= totalPages) {
-                      loadPage(totalPages - 1);
-                    } else {
-                      this.pageIndex = pageResponse.getPageIndex();
-                      view.render(pageResponse);
-                    }
-                    view.showSuccess("room.refresh");
-                  });
-            })
-        .exceptionally(
-            ex -> {
-              log.error("Error loading rooms", ex);
-              return null;
-            });
-  }
-
-  private Void handleException(Throwable ex) {
+  private void handleException(Throwable ex) {
     SwingUtilities.invokeLater(
         () -> {
           log.error("Action failed", ex);
@@ -150,7 +192,6 @@ public class LobbyPresenter {
             view.showError(messageKey);
           }
         });
-    return null;
   }
 
   private String mapErrorToMessageKey(String errorBody) {

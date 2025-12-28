@@ -4,7 +4,7 @@ import static vn.nghlong3004.boom.online.client.controller.view.room.RoomPanel.i
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.google.gson.Gson;
-import java.awt.Cursor;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -42,6 +42,10 @@ public class LobbyPanel extends JPanel {
   private final String modalId;
   private RoomPanel roomPanel;
 
+  private final StartButton btnCreate;
+  private final StartButton btnRefresh;
+  private final JButton btnBack;
+
   @Getter private final LobbyPresenter presenter;
 
   private final JPanel roomsContainer;
@@ -65,9 +69,9 @@ public class LobbyPanel extends JPanel {
     JLabel title = new JLabel(text("lobby.title"));
     title.putClientProperty(FlatClientProperties.STYLE, "font:bold +3;");
 
-    StartButton btnCreate = new StartButton(text("lobby.btn.create"), true);
-    StartButton btnRefresh = new StartButton(text("lobby.btn.refresh"), false);
-    JButton btnBack = iconButton(ImageConstant.BACK);
+    this.btnCreate = new StartButton(text("lobby.btn.create"), true);
+    this.btnRefresh = new StartButton(text("lobby.btn.refresh"), false);
+    this.btnBack = iconButton(ImageConstant.BACK);
     btnBack.setToolTipText(text("common.back"));
     btnCreate.addActionListener(e -> presenter.onCreateRoomClicked());
     btnRefresh.addActionListener(e -> presenter.onRefreshClicked());
@@ -78,9 +82,7 @@ public class LobbyPanel extends JPanel {
     header.add(btnRefresh);
     header.add(btnBack);
 
-    roomsContainer =
-        new JPanel(
-            new MigLayout("fillx, wrap, insets 0", "[grow 70,fill,min:720][grow 30,fill,min:340]"));
+    roomsContainer = new JPanel(new MigLayout("fillx, wrap, insets 0", "[grow,fill]"));
     roomsContainer.putClientProperty(FlatClientProperties.STYLE, "background:null;");
 
     JScrollPane scroll = new JScrollPane(roomsContainer);
@@ -110,6 +112,24 @@ public class LobbyPanel extends JPanel {
       btnNext.setEnabled(false);
       btnPrev.setEnabled(false);
     }
+  }
+
+  public void setControlsEnabled(boolean enabled) {
+    SwingUtilities.invokeLater(
+        () -> {
+          btnCreate.setEnabled(enabled);
+          btnRefresh.setEnabled(enabled);
+          btnBack.setEnabled(enabled);
+          btnPrev.setEnabled(enabled);
+          btnNext.setEnabled(enabled);
+
+          for (Component comp : roomsContainer.getComponents()) {
+            comp.setEnabled(enabled);
+          }
+
+          this.setCursor(
+              enabled ? Cursor.getDefaultCursor() : Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        });
   }
 
   public void render(RoomPageResponse page) {
@@ -194,10 +214,11 @@ public class LobbyPanel extends JPanel {
         new MouseAdapter() {
           @Override
           public void mouseClicked(MouseEvent e) {
-            presenter.onRoomSelected(room.getId());
+            if (panel.isEnabled()) {
+              presenter.onRoomSelected(room.getId());
+            }
           }
         });
-
     return panel;
   }
 
