@@ -38,4 +38,14 @@ public class GameMap {
         int tile = getTile(row, col);
         return tile == TileType.BRICK.id || tile == TileType.GIFT_BOX.id;
     }
+
+    public boolean isInBounds(int row, int col) {
+        return row >= 0 && row < rows && col >= 0 && col < cols;
+    }
+
+    public void destroyBrick(int row, int col) {
+        if (isInBounds(row, col) && isBreakableWall(row, col)) {
+            tileData[row][col] = TileType.FLOOR.id;
+        }
+    }
 }
