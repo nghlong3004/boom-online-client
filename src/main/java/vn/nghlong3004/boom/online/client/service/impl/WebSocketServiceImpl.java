@@ -24,13 +24,14 @@ import vn.nghlong3004.boom.online.client.session.SessionHandlerAdapter;
  */
 @Slf4j
 public class WebSocketServiceImpl implements WebSocketService {
-
+  private static final String WEBSOCKET = "ws://";
   private final String serverUrl;
   private final WebSocketStompClient stompClient;
   private StompSession session;
+  private StompSession.Subscription currentSubscription;
 
   public WebSocketServiceImpl(String host, Gson gson) {
-    this.serverUrl = "ws" + host + "/ws";
+    this.serverUrl = WEBSOCKET + host + "/ws";
     StandardWebSocketClient client = new StandardWebSocketClient();
     this.stompClient = new WebSocketStompClient(client);
     this.stompClient.setMessageConverter(new GsonMessageConverter(gson));
@@ -38,7 +39,37 @@ public class WebSocketServiceImpl implements WebSocketService {
 
   @Override
   public void connectAndSubscribe(String token, String roomId, Consumer<Room> onRoomUpdate) {
-    if (session != null && session.isConnected()) return;
+    ensureConnected(token);
+
+    if (currentSubscription != null) {
+      currentSubscription.unsubscribe();
+      log.info("Unsubscribed from previous topic");
+    }
+    String topic = "/topic/room/" + roomId;
+    currentSubscription =
+        session.subscribe(
+            topic,
+            new StompFrameHandler() {
+              @Override
+              @NonNull
+              public Type getPayloadType(@NonNull StompHeaders headers) {
+                return Room.class;
+              }
+
+              @Override
+              public void handleFrame(@NonNull StompHeaders headers, Object payload) {
+                Room room = (Room) payload;
+                onRoomUpdate.accept(room);
+              }
+            });
+
+    log.info("Subscribed to topic: {}", topic);
+  }
+
+  private void ensureConnected(String token) {
+    if (session != null && session.isConnected()) {
+      return;
+    }
 
     StompHeaders headers = new StompHeaders();
     headers.add("Authorization", "Bearer " + token);
@@ -49,23 +80,7 @@ public class WebSocketServiceImpl implements WebSocketService {
               .connectAsync(
                   serverUrl, (WebSocketHttpHeaders) null, headers, new SessionHandlerAdapter())
               .get();
-
-      session.subscribe(
-          "/topic/room/" + roomId,
-          new StompFrameHandler() {
-            @Override
-            @NonNull
-            public Type getPayloadType(@NonNull StompHeaders headers) {
-              return Room.class;
-            }
-
-            @Override
-            public void handleFrame(@NonNull StompHeaders headers, Object payload) {
-              Room room = (Room) payload;
-              SwingUtilities.invokeLater(() -> onRoomUpdate.accept(room));
-            }
-          });
-
+      log.info("WebSocket Session established: {}", session.getSessionId());
     } catch (InterruptedException | ExecutionException e) {
       log.error("WebSocket connection failed", e);
       throw new RuntimeException("Cannot connect to game server", e);
@@ -87,10 +102,14 @@ public class WebSocketServiceImpl implements WebSocketService {
 
   @Override
   public void disconnect() {
+    if (currentSubscription != null) {
+      currentSubscription.unsubscribe();
+      currentSubscription = null;
+    }
     if (session != null && session.isConnected()) {
       session.disconnect();
       session = null;
-      log.info("Disconnected from WebSocket");
+      log.info("Disconnected from WebSocket completely");
     }
   }
 }
