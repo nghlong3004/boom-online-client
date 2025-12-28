@@ -1,4 +1,4 @@
-package vn.nghlong3004.boom.online.client.model;
+package vn.nghlong3004.boom.online.client.model.room;
 
 /**
  * Project: boom-online-client
