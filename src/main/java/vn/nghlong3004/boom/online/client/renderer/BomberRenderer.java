@@ -2,6 +2,7 @@ package vn.nghlong3004.boom.online.client.renderer;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import lombok.Getter;
 import vn.nghlong3004.boom.online.client.animator.BomberAnimator;
 import vn.nghlong3004.boom.online.client.constant.BomberConstant;
 import vn.nghlong3004.boom.online.client.constant.GameConstant;
@@ -14,6 +15,7 @@ import vn.nghlong3004.boom.online.client.model.bomber.BomberState;
  * @author nghlong3004
  * @since 12/28/2025
  */
+@Getter
 public class BomberRenderer {
 
   private static final int RENDER_WIDTH = (int) (BomberConstant.BOMBER_WIDTH_IMAGE * 0.9f);
@@ -71,9 +73,5 @@ public class BomberRenderer {
       return DEATH_RENDER_SIZE;
     }
     return RENDER_HEIGHT;
-  }
-
-  public BomberAnimator getAnimator() {
-    return animator;
   }
 }

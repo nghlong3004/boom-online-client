@@ -14,7 +14,7 @@ import vn.nghlong3004.boom.online.client.constant.GameConstant;
 @Setter
 public class Bomber {
 
-  private static final float DEFAULT_SPEED = 2.0f;
+  private static final float DEFAULT_SPEED = 0.6f;
   private static final int DEFAULT_LIVES = 3;
 
   private final int playerIndex;
