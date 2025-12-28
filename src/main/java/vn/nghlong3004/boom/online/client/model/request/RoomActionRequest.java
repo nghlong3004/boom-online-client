@@ -1,6 +1,6 @@
 package vn.nghlong3004.boom.online.client.model.request;
 
-import vn.nghlong3004.boom.online.client.model.RoomActionType;
+import vn.nghlong3004.boom.online.client.model.room.RoomActionType;
 
 /**
  * Project: boom-online-client

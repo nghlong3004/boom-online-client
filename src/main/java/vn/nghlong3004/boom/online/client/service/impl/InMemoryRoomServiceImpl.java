@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 import vn.nghlong3004.boom.online.client.model.User;
 import vn.nghlong3004.boom.online.client.model.response.RoomPageResponse;
 import vn.nghlong3004.boom.online.client.model.room.*;
+import vn.nghlong3004.boom.online.client.model.room.ChatMessage;
 import vn.nghlong3004.boom.online.client.service.RoomService;
 import vn.nghlong3004.boom.online.client.session.UserSession;
 import vn.nghlong3004.boom.online.client.util.I18NUtil;
