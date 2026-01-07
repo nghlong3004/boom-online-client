@@ -129,7 +129,7 @@ public class PlayingState implements GameState {
   private void initializeManagers() {
     GameMap gameMap = getGameMap();
     List<PlayerInfo> players = getPlayers();
-    String localUserId = getCurrentUsename();
+    String localUserId = getCurrentUsername();
 
     bomberManager = new BomberManager(gameMap);
     bomberManager.initializeBombers(players, localUserId);
@@ -268,7 +268,7 @@ public class PlayingState implements GameState {
     String reason = "game_ended";
 
     if (result == GameResult.WIN) {
-      winnerId = getCurrentUsename();
+      winnerId = getCurrentUsername();
       reason = "last_player_standing";
     } else if (result == GameResult.LOSE && bomberManager != null) {
       var lastAlive = bomberManager.getLastAlive();
@@ -293,7 +293,7 @@ public class PlayingState implements GameState {
       return;
     }
 
-    String localUserId = getCurrentUsename();
+    String localUserId = getCurrentUsername();
     if (update.playerId() != null && update.playerId().equals(localUserId)) {
       return;
     }
@@ -386,7 +386,7 @@ public class PlayingState implements GameState {
       String winnerId = data != null ? (String) data.get("winnerId") : null;
       String reason = data != null ? (String) data.get("reason") : "unknown";
 
-      String localUserId = getCurrentUsename();
+      String localUserId = getCurrentUsername();
       GameResult result;
       log.info("winner info: {}", winnerId);
       if (winnerId == null || winnerId.isEmpty()) {
@@ -442,7 +442,7 @@ public class PlayingState implements GameState {
             });
   }
 
-  private String getCurrentUsename() {
+  private String getCurrentUsername() {
     if (UserSession.getInstance().getCurrentUser() != null) {
       return String.valueOf(UserSession.getInstance().getCurrentUser().getEmail());
     }
@@ -455,10 +455,11 @@ public class PlayingState implements GameState {
     renderMap(g2d);
     renderBombs(g2d);
     renderBombers(g2d);
-    renderTimer(g2d);
     renderHud(g);
     if (gameEnded && gameResult != null) {
       resultRenderer.render(g2d, gameResult);
+    } else {
+      renderTimer(g2d);
     }
 
     if (spectatorDialog.isVisible()) {
@@ -516,9 +517,7 @@ public class PlayingState implements GameState {
           previous(GameContext.getInstance());
         }
       }
-      case KeyEvent.VK_ESCAPE -> {
-        previous(GameContext.getInstance());
-      }
+      case KeyEvent.VK_ESCAPE -> previous(GameContext.getInstance());
     }
   }
 

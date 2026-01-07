@@ -45,19 +45,19 @@ public class BombManager {
     this.maxBombs = DEFAULT_MAX_BOMBS;
   }
 
-  public boolean placeBomb(Bomber bomber) {
+  public void placeBomb(Bomber bomber) {
     int tileX = bomber.getTileX();
     int tileY = bomber.getTileY();
 
     if (hasBombAt(tileX, tileY)) {
-      return false;
+      return;
     }
 
     long bomberBombCount =
         bombs.stream().filter(b -> b.getOwnerId().equals(bomber.getUserId())).count();
 
     if (bomberBombCount >= maxBombs) {
-      return false;
+      return;
     }
 
     Bomb bomb =
@@ -71,8 +71,6 @@ public class BombManager {
     bombs.add(bomb);
 
     GameSession.getInstance().sendPlaceBomb(tileX, tileY, DEFAULT_POWER);
-
-    return true;
   }
 
   public void placeBombFromNetwork(int tileX, int tileY, int power, Long ownerId) {
@@ -167,8 +165,8 @@ public class BombManager {
     for (Bomb bomb : bombs) {
       bombRenderer.render(g2d, bomb);
     }
-
-    for (Explosion explosion : explosions) {
+    var copyExplosions = new ArrayList<>(explosions);
+    for (Explosion explosion : copyExplosions) {
       ExplosionRenderer renderer = explosionRenderers.get(explosion);
       if (renderer != null) {
         renderer.render(g2d, explosion);
