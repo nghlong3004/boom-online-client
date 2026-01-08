@@ -1,6 +1,6 @@
 = Boom Battle Document
 Long Nguyen Hoang <nghlong3004@gmail.com>
-v1.0, 2025-11
+v2.0, 2026-01
 :sectnums:
 :toc:
 :toclevels: 4
